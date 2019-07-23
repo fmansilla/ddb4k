@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <!-- See https://logging.apache.org/log4j/2.x/manual/appenders.html-->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{0} - %msg%n"/>
+        </Console>
+
+        <File name="LogFile" fileName="logs/app.log">
+
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+            </PatternLayout>
+        </File>
+
+        <Async name="Async" bufferSize="1024">
+            <AppenderRef ref="LogFile"/>
+        </Async>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="ar.ferman" level="info" additivity="true">
+            <AppenderRef ref="LogFile" />
+        </Logger>}
+
+        <Logger name="io.netty" level="warn" additivity="true">
+            <AppenderRef ref="LogFile" />
+        </Logger>}
+
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>
