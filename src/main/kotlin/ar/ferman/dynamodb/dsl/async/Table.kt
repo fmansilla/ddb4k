@@ -4,10 +4,8 @@ import ar.ferman.dynamodb.dsl.Attributes
 import ar.ferman.dynamodb.dsl.Query
 import ar.ferman.dynamodb.dsl.Scan
 import ar.ferman.dynamodb.dsl.TableDefinition
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.withContext
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
@@ -183,10 +181,12 @@ class Table(
                 val queryRequest = scanBuilder.build(lastEvaluatedKey)
                 lateinit var pageContent: List<T>
 
-                withContext(Dispatchers.IO) {
-                    val result = dynamoDbClient.scan(queryRequest).get()
-                    pageContent = (result?.items()?.mapNotNull { scanBuilder.mapper.invoke(it) } ?: emptyList())
-                    lastEvaluatedKey = result?.lastEvaluatedKey() ?: emptyMap()
+                suspendCoroutine<Unit> { continuation ->
+                    dynamoDbClient.scan(queryRequest).whenComplete { result, _ ->
+                        pageContent = (result?.items()?.mapNotNull { scanBuilder.mapper.invoke(it) } ?: emptyList())
+                        lastEvaluatedKey = result?.lastEvaluatedKey() ?: emptyMap()
+                        continuation.resume(Unit)
+                    }
                 }
 
                 pageContent.forEach { emit(it) }

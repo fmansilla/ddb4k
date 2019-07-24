@@ -4,27 +4,40 @@ import ar.ferman.dynamodb.dsl.Attributes
 import ar.ferman.dynamodb.dsl.Query
 import ar.ferman.dynamodb.dsl.Scan
 import ar.ferman.dynamodb.dsl.TableDefinition
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
-import kotlin.coroutines.coroutineContext
 
 class Table(
     private val dynamoDbClient: DynamoDbClient,
     private val tableDefinition: TableDefinition
 ) {
-    suspend fun <T : Any> query(block: Query<T>.() -> Unit): List<T> = withContext(Dispatchers.IO) {
-        val queryBuilder = Query<T>(tableDefinition)
-        block.invoke(queryBuilder)
-        val queryRequest = queryBuilder.build(emptyMap())
 
-        dynamoDbClient.query(queryRequest)?.items()?.mapNotNull { queryBuilder.mapper.invoke(it) } ?: emptyList()
+    fun <T : Any> query(block: Query<T>.() -> Unit): Flow<T> {
+        val queryBuilder = Query<T>(tableDefinition)
+
+        block.invoke(queryBuilder)
+
+        return flow {
+            var lastEvaluatedKey = emptyMap<String, AttributeValue>()
+
+            do {
+                val queryRequest = queryBuilder.build(lastEvaluatedKey)
+                lateinit var pageContent: List<T>
+
+                withContext(Dispatchers.IO) {
+                    val result = dynamoDbClient.query(queryRequest)
+                    pageContent = (result?.items()?.mapNotNull { queryBuilder.mapper.invoke(it) } ?: emptyList())
+                    lastEvaluatedKey = result?.lastEvaluatedKey() ?: emptyMap()
+                }
+
+                pageContent.forEach { emit(it) }
+            } while (lastEvaluatedKey.isNotEmpty())
+        }
     }
 
     suspend fun <T : Any> put(value: T, toItem: (T) -> Attributes) = withContext(Dispatchers.IO) {
@@ -54,13 +67,12 @@ class Table(
         }
     }
 
-    @ExperimentalCoroutinesApi
-    suspend fun <T : Any> scan(block: Scan<T>.() -> Unit): ReceiveChannel<T> {
+    suspend fun <T : Any> scan(block: Scan<T>.() -> Unit): Flow<T> {
         val scanBuilder = Scan<T>(tableDefinition)
 
         block.invoke(scanBuilder)
 
-        return CoroutineScope(coroutineContext).produce {
+        return flow {
             var lastEvaluatedKey = emptyMap<String, AttributeValue>()
 
             do {
@@ -73,7 +85,7 @@ class Table(
                     lastEvaluatedKey = result?.lastEvaluatedKey() ?: emptyMap()
                 }
 
-                pageContent.forEach { send(it) }
+                pageContent.forEach { emit(it) }
             } while (lastEvaluatedKey.isNotEmpty())
         }
     }

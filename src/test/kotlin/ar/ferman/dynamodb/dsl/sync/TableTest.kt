@@ -1,4 +1,4 @@
-package ar.ferman.dynamodb.dsl.async
+package ar.ferman.dynamodb.dsl.sync
 
 import ar.ferman.dynamodb.dsl.DynamoDbForTests
 import ar.ferman.dynamodb.dsl.TableDefinition
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 @Testcontainers
 class TableTest {
@@ -22,13 +22,13 @@ class TableTest {
         val dynamoDb: KGenericContainer = DynamoDbForTests.createContainer()
     }
 
-    private lateinit var dynamoDbClient: DynamoDbAsyncClient
+    private lateinit var dynamoDbClient: DynamoDbClient
     private lateinit var table: Table
     private lateinit var itemMapper: UserRankingItemMapper
 
     @BeforeEach
     internal fun setUp() = runBlocking<Unit> {
-        dynamoDbClient = DynamoDbForTests.createAsyncClient()
+        dynamoDbClient = DynamoDbForTests.createSyncClient()
         table = Table(
             dynamoDbClient,
             TableDefinition(
