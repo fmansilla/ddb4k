@@ -1,12 +1,14 @@
 package ar.ferman.dynamodb.dsl.async
 
 import ar.ferman.dynamodb.dsl.*
+import ar.ferman.dynamodb.dsl.builder.Query
+import ar.ferman.dynamodb.dsl.builder.Scan
+import ar.ferman.dynamodb.dsl.builder.Update
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
-import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -194,9 +196,9 @@ class Table(
     }
 
 
-    suspend fun <T : Any> update(update: Update<T>.() -> Unit) {
+    suspend fun update(update: Update.() -> Unit) {
 
-        val updateBuilder = Update<T>(tableDefinition)
+        val updateBuilder = Update(tableDefinition)
         update(updateBuilder)
 
         val updateItemRequest = updateBuilder.build()
@@ -212,61 +214,5 @@ class Table(
         }
     }
 
-    class Update<T>(private val tableDefinition: TableDefinition) {
-        private val updateItemRequest = UpdateItemRequest.builder().tableName(tableDefinition.name)
-
-        private val updateExpressions = mutableMapOf<String, MutableList<String>>()
-        private val updateExpressionAttributes = mutableMapOf<String, AttributeValue>()
-
-        fun where(block: KeyCondition.() -> Unit) {
-            val keyCondition = KeyCondition()
-            block.invoke(keyCondition)
-            updateItemRequest.key(keyCondition.build())
-        }
-
-        fun set(attributeName: String, value: String) {
-            getUpdateExpressionsList("SET") += "$attributeName = :$attributeName"
-            updateExpressionAttributes[":$attributeName"] = value.toAttributeValue()
-        }
-
-        fun set(attributeName: String, value: Number) {
-            getUpdateExpressionsList("SET") += "$attributeName = :$attributeName"
-            updateExpressionAttributes[":$attributeName"] = value.toAttributeValue()
-        }
-
-        fun remove(vararg attributeNames: String) {
-            getUpdateExpressionsList("REMOVE").addAll(attributeNames)
-        }
-
-//        fun add() {
-//            updateExpressions += ""
-//        }
-
-        private fun getUpdateExpressionsList(operation: String) =
-            updateExpressions.computeIfAbsent(operation) { mutableListOf() }
-
-        fun build(): UpdateItemRequest {
-            val updateExpresion = updateExpressions
-                .map { (type, expressions) -> "$type ${expressions.joinToString(separator = ", ")}"}
-                .joinToString(" ")
-
-            return updateItemRequest
-                .expressionAttributeValues(updateExpressionAttributes)
-                .updateExpression(updateExpresion)
-                .build()
-        }
-    }
-
-    class KeyCondition {
-
-        private val attributes = mutableMapOf<String, AttributeValue>()
-
-        infix fun String.eq(value: String) {attributes[this] = value.toAttributeValue()}
-        infix fun String.eq(value: Number) {attributes[this] = value.toAttributeValue()}
-
-        fun build(): Attributes {
-            return attributes
-        }
-    }
 }
 

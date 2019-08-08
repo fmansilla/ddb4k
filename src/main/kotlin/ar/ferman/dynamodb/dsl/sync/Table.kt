@@ -1,6 +1,8 @@
 package ar.ferman.dynamodb.dsl.sync
 
 import ar.ferman.dynamodb.dsl.*
+import ar.ferman.dynamodb.dsl.builder.Query
+import ar.ferman.dynamodb.dsl.builder.Scan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

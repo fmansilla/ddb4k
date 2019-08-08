@@ -112,7 +112,7 @@ class TableTest {
     @Test
     fun `update only some attributes`() = runBlocking<Unit> {
         table.put(UserRanking("a", 5), itemMapper::toItem)
-        table.update<UserRanking> {
+        table.update {
             set("score", 10)
             where {
                 UserRankingTable.UserId eq "a"

@@ -1,5 +1,6 @@
-package ar.ferman.dynamodb.dsl
+package ar.ferman.dynamodb.dsl.builder
 
+import ar.ferman.dynamodb.dsl.toAttributeValue
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.ComparisonOperator
 import software.amazon.awssdk.services.dynamodb.model.ComparisonOperator.*
