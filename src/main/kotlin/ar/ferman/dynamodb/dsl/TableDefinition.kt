@@ -1,7 +1,14 @@
 package ar.ferman.dynamodb.dsl
 
+enum class AttributeType {
+    STRING,
+    NUMBER
+}
+
+data class TableKeyAttribute(val name: String, val type: AttributeType)
+
 data class TableDefinition(
     val name: String,
-    val hashKey: String,
-    val sortKey: String? = null
+    val hashKey: TableKeyAttribute,
+    val sortKey: TableKeyAttribute? = null
 )

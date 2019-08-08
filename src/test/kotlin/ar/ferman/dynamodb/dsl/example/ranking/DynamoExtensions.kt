@@ -75,3 +75,4 @@ suspend fun DynamoDbClient.createUserRankingTable() = withContext(Dispatchers.IO
         it.provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(1).writeCapacityUnits(1).build())
     }
 }
+

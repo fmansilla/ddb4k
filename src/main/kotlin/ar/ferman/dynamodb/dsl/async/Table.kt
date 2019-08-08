@@ -1,14 +1,16 @@
 package ar.ferman.dynamodb.dsl.async
 
-import ar.ferman.dynamodb.dsl.*
+import ar.ferman.dynamodb.dsl.AttributeType
+import ar.ferman.dynamodb.dsl.Attributes
+import ar.ferman.dynamodb.dsl.PaginatedResult
+import ar.ferman.dynamodb.dsl.TableDefinition
 import ar.ferman.dynamodb.dsl.builder.Query
 import ar.ferman.dynamodb.dsl.builder.Scan
 import ar.ferman.dynamodb.dsl.builder.Update
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
+import software.amazon.awssdk.services.dynamodb.model.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -17,6 +19,54 @@ class Table(
     private val dynamoDbClient: DynamoDbAsyncClient,
     private val tableDefinition: TableDefinition
 ) {
+
+    suspend fun create() {
+        val keySchemaElements = mutableListOf<KeySchemaElement>()
+        val keyAttributeDefinitions = mutableListOf<AttributeDefinition>()
+
+        tableDefinition.hashKey.apply {
+            keySchemaElements.add(KeySchemaElement.builder().attributeName(name).keyType(KeyType.HASH).build())
+            keyAttributeDefinitions.add(AttributeDefinition.builder().attributeName(name).attributeType(type.toAttributeType()).build())
+        }
+
+        tableDefinition.sortKey?.apply {
+            keySchemaElements.add(KeySchemaElement.builder().attributeName(name).keyType(KeyType.RANGE).build())
+            keyAttributeDefinitions.add(AttributeDefinition.builder().attributeName(name).attributeType(type.toAttributeType()).build())
+        }
+
+        val createTableRequest = CreateTableRequest.builder()
+            .tableName(tableDefinition.name)
+            .keySchema(keySchemaElements)
+            .attributeDefinitions(keyAttributeDefinitions)
+            .billingMode(BillingMode.PAY_PER_REQUEST)
+            .build()
+
+        return suspendCoroutine { continuation ->
+            dynamoDbClient.createTable(createTableRequest).whenComplete { _, error ->
+                if (error != null) {
+                    continuation.resumeWithException(error)
+                } else {
+                    continuation.resume(Unit)
+                }
+            }
+        }
+    }
+
+    suspend fun delete() {
+        val createTableRequest = DeleteTableRequest.builder()
+            .tableName(tableDefinition.name)
+            .build()
+
+        return suspendCoroutine { continuation ->
+            dynamoDbClient.deleteTable(createTableRequest).whenComplete { _, error ->
+                if (error != null) {
+                    continuation.resumeWithException(error)
+                } else {
+                    continuation.resume(Unit)
+                }
+            }
+        }
+    }
 
     suspend fun <T : Any> queryPaginated(block: Query<T>.() -> Unit): PaginatedResult<T> {
         val queryBuilder = Query<T>(tableDefinition)
@@ -214,5 +264,12 @@ class Table(
         }
     }
 
+}
+
+private fun AttributeType.toAttributeType(): ScalarAttributeType {
+    return when (this) {
+        AttributeType.STRING -> ScalarAttributeType.S
+        AttributeType.NUMBER -> ScalarAttributeType.N
+    }
 }
 

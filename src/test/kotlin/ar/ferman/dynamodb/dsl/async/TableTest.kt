@@ -1,8 +1,12 @@
 package ar.ferman.dynamodb.dsl.async
 
+import ar.ferman.dynamodb.dsl.AttributeType
 import ar.ferman.dynamodb.dsl.DynamoDbForTests
 import ar.ferman.dynamodb.dsl.TableDefinition
-import ar.ferman.dynamodb.dsl.example.ranking.*
+import ar.ferman.dynamodb.dsl.TableKeyAttribute
+import ar.ferman.dynamodb.dsl.example.ranking.UserRanking
+import ar.ferman.dynamodb.dsl.example.ranking.UserRankingItemMapper
+import ar.ferman.dynamodb.dsl.example.ranking.UserRankingTable
 import ar.ferman.dynamodb.dsl.utils.KGenericContainer
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -20,6 +24,11 @@ class TableTest {
         @Container
         @JvmField
         val dynamoDbContainer: KGenericContainer = DynamoDbForTests.createContainer()
+
+
+        private const val USERNAME_1 = "username_1"
+        private const val USERNAME_2 = "username_2"
+        private const val USERNAME_3 = "username_3"
     }
 
     private lateinit var dynamoDbClient: DynamoDbAsyncClient
@@ -32,14 +41,13 @@ class TableTest {
         table = Table(
             dynamoDbClient,
             TableDefinition(
-                UserRankingTable.TableName,
-                UserRankingTable.UserId
+                name = UserRankingTable.TableName,
+                hashKey = TableKeyAttribute(UserRankingTable.UserId, AttributeType.STRING)
             )
         )
         itemMapper = UserRankingItemMapper()
 
-        dynamoDbClient.deleteUserRankingTable()
-        dynamoDbClient.createUserRankingTable()
+        table.createIfNotExist()
     }
 
     @Test
@@ -51,7 +59,7 @@ class TableTest {
             )
             mappingItems(itemMapper::fromItem)
             where {
-                UserRankingTable.UserId eq "a"
+                UserRankingTable.UserId eq USERNAME_1
             }
         }.toList()
 
@@ -60,9 +68,9 @@ class TableTest {
 
     @Test
     fun `query for single existent element returns it`() = runBlocking<Unit> {
-        table.put(UserRanking("a", 5), itemMapper::toItem)
-        table.put(UserRanking("b", 10), itemMapper::toItem)
-        table.put(UserRanking("c", 15), itemMapper::toItem)
+        table.put(UserRanking(USERNAME_1, 5), itemMapper::toItem)
+        table.put(UserRanking(USERNAME_2, 10), itemMapper::toItem)
+        table.put(UserRanking(USERNAME_3, 15), itemMapper::toItem)
 
         val result = table.query<UserRanking> {
             attributes(
@@ -71,11 +79,11 @@ class TableTest {
             )
             mappingItems(itemMapper::fromItem)
             where {
-                UserRankingTable.UserId eq "a"
+                UserRankingTable.UserId eq USERNAME_1
             }
         }.toList()
 
-        then(result).containsExactly(UserRanking("a", 5))
+        then(result).containsExactly(UserRanking(USERNAME_1, 5))
     }
 
 
@@ -94,9 +102,9 @@ class TableTest {
 
     @Test
     fun `scan non empty table return all items`() = runBlocking<Unit> {
-        table.put(UserRanking("a", 5), itemMapper::toItem)
-        table.put(UserRanking("b", 10), itemMapper::toItem)
-        table.put(UserRanking("c", 15), itemMapper::toItem)
+        table.put(UserRanking(USERNAME_1, 5), itemMapper::toItem)
+        table.put(UserRanking(USERNAME_2, 10), itemMapper::toItem)
+        table.put(UserRanking(USERNAME_3, 15), itemMapper::toItem)
 
         val result = table.scan<UserRanking> {
             attributes(
@@ -106,16 +114,20 @@ class TableTest {
             mappingItems(itemMapper::fromItem)
         }.toList()
 
-        then(result).containsExactlyInAnyOrder(UserRanking("a", 5), UserRanking("b", 10), UserRanking("c", 15))
+        then(result).containsExactlyInAnyOrder(
+            UserRanking(USERNAME_1, 5),
+            UserRanking(USERNAME_2, 10),
+            UserRanking(USERNAME_3, 15)
+        )
     }
 
     @Test
     fun `update only some attributes`() = runBlocking<Unit> {
-        table.put(UserRanking("a", 5), itemMapper::toItem)
+        table.put(UserRanking(USERNAME_1, 5), itemMapper::toItem)
         table.update {
-            set("score", 10)
+            set(UserRankingTable.Score, 10)
             where {
-                UserRankingTable.UserId eq "a"
+                UserRankingTable.UserId eq USERNAME_1
             }
         }
 
@@ -127,6 +139,6 @@ class TableTest {
             mappingItems(itemMapper::fromItem)
         }.toList()
 
-        then(result).containsExactlyInAnyOrder(UserRanking("a", 10))
+        then(result).containsExactlyInAnyOrder(UserRanking(USERNAME_1, 10))
     }
 }

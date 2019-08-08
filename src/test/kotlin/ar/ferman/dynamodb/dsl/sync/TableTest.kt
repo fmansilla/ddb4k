@@ -1,7 +1,9 @@
 package ar.ferman.dynamodb.dsl.sync
 
+import ar.ferman.dynamodb.dsl.AttributeType
 import ar.ferman.dynamodb.dsl.DynamoDbForTests
 import ar.ferman.dynamodb.dsl.TableDefinition
+import ar.ferman.dynamodb.dsl.TableKeyAttribute
 import ar.ferman.dynamodb.dsl.example.ranking.*
 import ar.ferman.dynamodb.dsl.utils.KGenericContainer
 import kotlinx.coroutines.flow.toList
@@ -33,7 +35,7 @@ class TableTest {
             dynamoDbClient,
             TableDefinition(
                 UserRankingTable.TableName,
-                UserRankingTable.UserId
+                TableKeyAttribute(UserRankingTable.UserId, AttributeType.STRING)
             )
         )
         itemMapper = UserRankingItemMapper()
