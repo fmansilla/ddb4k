@@ -8,6 +8,10 @@ import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 
 class QueryCondition(private val queryRequestBuilder: QueryRequest.Builder) {
 
+    fun custom(builderBlock: QueryRequest.Builder.() -> Unit){
+        builderBlock.invoke(queryRequestBuilder)
+    }
+
     infix fun String.eq(value: String) = addCondition(this, EQ, value.toAttributeValue())
     infix fun String.eq(value: Number) = addCondition(this, EQ, value.toAttributeValue())
 
@@ -25,9 +29,6 @@ class QueryCondition(private val queryRequestBuilder: QueryRequest.Builder) {
 
     infix fun String.ne(value: String) = addCondition(this, NE, value.toAttributeValue())
     infix fun String.ne(value: Number) = addCondition(this, NE, value.toAttributeValue())
-
-    private fun String.toAttributeValue() = AttributeValue.builder().s(this).build()
-    private fun Number.toAttributeValue() = AttributeValue.builder().n(toString()).build()
 
     private fun addCondition(attribute: String, operator: ComparisonOperator, vararg values: AttributeValue) {
         queryRequestBuilder.keyConditions(

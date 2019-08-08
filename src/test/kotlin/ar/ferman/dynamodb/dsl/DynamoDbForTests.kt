@@ -10,18 +10,19 @@ import java.net.URI
 object DynamoDbForTests {
     const val DYNAMO_PORT = 8000
 
-    fun createAsyncClient() = DynamoDbAsyncClient.builder()
+    fun createAsyncClient(container: KGenericContainer) = DynamoDbAsyncClient.builder()
         .region(Region.US_EAST_1)
-        .endpointOverride(URI("http://localhost:$DYNAMO_PORT"))
+        .endpointOverride(URI("http://${container.containerIpAddress}:${container.getMappedPort(DYNAMO_PORT)}"))
         .credentialsProvider { AwsBasicCredentials.create("access", "secret") }.build()
 
-    fun createSyncClient() = DynamoDbClient.builder()
+    fun createSyncClient(container: KGenericContainer) = DynamoDbClient.builder()
         .region(Region.US_EAST_1)
-        .endpointOverride(URI("http://localhost:$DYNAMO_PORT"))
+        .endpointOverride(URI("http://${container.containerIpAddress}:${container.getMappedPort(DYNAMO_PORT)}"))
         .credentialsProvider { AwsBasicCredentials.create("access", "secret") }.build()
 
     fun createContainer(): KGenericContainer {
-        return KGenericContainer("amazon/dynamodb-local:1.11.477").withExposedPorts(DYNAMO_PORT)
+        return KGenericContainer("amazon/dynamodb-local:1.11.477")
+            .withExposedPorts(DYNAMO_PORT)
     }
 }
 

@@ -19,7 +19,7 @@ class TableTest {
     companion object {
         @Container
         @JvmField
-        val dynamoDb: KGenericContainer = DynamoDbForTests.createContainer()
+        val dynamoDbContainer: KGenericContainer = DynamoDbForTests.createContainer()
     }
 
     private lateinit var dynamoDbClient: DynamoDbAsyncClient
@@ -28,7 +28,7 @@ class TableTest {
 
     @BeforeEach
     internal fun setUp() = runBlocking<Unit> {
-        dynamoDbClient = DynamoDbForTests.createAsyncClient()
+        dynamoDbClient = DynamoDbForTests.createAsyncClient(dynamoDbContainer)
         table = Table(
             dynamoDbClient,
             TableDefinition(
@@ -107,5 +107,26 @@ class TableTest {
         }.toList()
 
         then(result).containsExactlyInAnyOrder(UserRanking("a", 5), UserRanking("b", 10), UserRanking("c", 15))
+    }
+
+    @Test
+    fun `update only some attributes`() = runBlocking<Unit> {
+        table.put(UserRanking("a", 5), itemMapper::toItem)
+        table.update<UserRanking> {
+            set("score", 10)
+            where {
+                UserRankingTable.UserId eq "a"
+            }
+        }
+
+        val result = table.scan<UserRanking> {
+            attributes(
+                UserRankingTable.UserId,
+                UserRankingTable.Score
+            )
+            mappingItems(itemMapper::fromItem)
+        }.toList()
+
+        then(result).containsExactlyInAnyOrder(UserRanking("a", 10))
     }
 }

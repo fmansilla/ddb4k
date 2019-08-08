@@ -17,8 +17,12 @@ suspend fun DynamoDbAsyncClient.deleteUserRankingTable() {
 }
 
 suspend fun DynamoDbClient.deleteUserRankingTable() = withContext(Dispatchers.IO) {
-    deleteTable {
-        it.tableName(UserRankingTable.TableName)
+    try {
+        deleteTable {
+            it.tableName(UserRankingTable.TableName)
+        }
+    } catch (e: Exception) {
+        //Ignoring if table not found
     }
 }
 
@@ -29,19 +33,19 @@ suspend fun DynamoDbAsyncClient.createUserRankingTable() {
             it.keySchema(
                 KeySchemaElement.builder()
                     .attributeName(UserRankingTable.UserId).keyType(KeyType.HASH)
-                    .build(),
-                KeySchemaElement.builder()
-                    .attributeName(UserRankingTable.Score).keyType(KeyType.RANGE)
                     .build()
+//                ,KeySchemaElement.builder()
+//                    .attributeName(UserRankingTable.Score).keyType(KeyType.RANGE)
+//                    .build()
 
             )
             it.attributeDefinitions(
                 AttributeDefinition.builder()
                     .attributeName(UserRankingTable.UserId).attributeType(ScalarAttributeType.S)
-                    .build(),
-                AttributeDefinition.builder()
-                    .attributeName(UserRankingTable.Score).attributeType(ScalarAttributeType.N)
                     .build()
+//                .AttributeDefinition.builder()
+//                    .attributeName(UserRankingTable.Score).attributeType(ScalarAttributeType.N)
+//                    .build()
             )
             it.provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(1).writeCapacityUnits(1).build())
         }.whenComplete { _, _ -> continuation.resume(Unit) }
@@ -54,19 +58,19 @@ suspend fun DynamoDbClient.createUserRankingTable() = withContext(Dispatchers.IO
         it.keySchema(
             KeySchemaElement.builder()
                 .attributeName(UserRankingTable.UserId).keyType(KeyType.HASH)
-                .build(),
-            KeySchemaElement.builder()
-                .attributeName(UserRankingTable.Score).keyType(KeyType.RANGE)
                 .build()
+//            ,KeySchemaElement.builder()
+//                .attributeName(UserRankingTable.Score).keyType(KeyType.RANGE)
+//                .build()
 
         )
         it.attributeDefinitions(
             AttributeDefinition.builder()
                 .attributeName(UserRankingTable.UserId).attributeType(ScalarAttributeType.S)
-                .build(),
-            AttributeDefinition.builder()
-                .attributeName(UserRankingTable.Score).attributeType(ScalarAttributeType.N)
                 .build()
+//            ,AttributeDefinition.builder()
+//                .attributeName(UserRankingTable.Score).attributeType(ScalarAttributeType.N)
+//                .build()
         )
         it.provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(1).writeCapacityUnits(1).build())
     }

@@ -19,7 +19,7 @@ class TableTest {
     companion object {
         @Container
         @JvmField
-        val dynamoDb: KGenericContainer = DynamoDbForTests.createContainer()
+        val dynamoDbContainer: KGenericContainer = DynamoDbForTests.createContainer()
     }
 
     private lateinit var dynamoDbClient: DynamoDbClient
@@ -28,7 +28,7 @@ class TableTest {
 
     @BeforeEach
     internal fun setUp() = runBlocking<Unit> {
-        dynamoDbClient = DynamoDbForTests.createSyncClient()
+        dynamoDbClient = DynamoDbForTests.createSyncClient(dynamoDbContainer)
         table = Table(
             dynamoDbClient,
             TableDefinition(
