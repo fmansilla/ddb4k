@@ -1,53 +1,20 @@
-package ar.ferman.dynamodb.dsl.async
+package ar.ferman.dynamodb.dsl
 
-import ar.ferman.dynamodb.dsl.AttributeType
-import ar.ferman.dynamodb.dsl.DynamoDbForTests
-import ar.ferman.dynamodb.dsl.TableDefinition
-import ar.ferman.dynamodb.dsl.TableKeyAttribute
 import ar.ferman.dynamodb.dsl.example.ranking.UserRanking
-import ar.ferman.dynamodb.dsl.example.ranking.UserRankingItemMapper
 import ar.ferman.dynamodb.dsl.example.ranking.UserRankingTable
-import ar.ferman.dynamodb.dsl.utils.KGenericContainer
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
-import org.assertj.core.api.BDDAssertions.then
-import org.junit.jupiter.api.BeforeEach
+import org.assertj.core.api.BDDAssertions
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
-@Testcontainers
-class TableTest {
+abstract class TableContractTest {
+    protected lateinit var table: Table
+    protected lateinit var itemMapper: ItemMapper<UserRanking>
 
     companion object {
-        @Container
-        @JvmField
-        val dynamoDbContainer: KGenericContainer = DynamoDbForTests.createContainer()
-
-
         private const val USERNAME_1 = "username_1"
         private const val USERNAME_2 = "username_2"
         private const val USERNAME_3 = "username_3"
-    }
-
-    private lateinit var dynamoDbClient: DynamoDbAsyncClient
-    private lateinit var table: Table
-    private lateinit var itemMapper: UserRankingItemMapper
-
-    @BeforeEach
-    internal fun setUp() = runBlocking<Unit> {
-        dynamoDbClient = DynamoDbForTests.createAsyncClient(dynamoDbContainer)
-        table = Table(
-            dynamoDbClient,
-            TableDefinition(
-                name = UserRankingTable.TableName,
-                hashKey = TableKeyAttribute(UserRankingTable.UserId, AttributeType.STRING)
-            )
-        )
-        itemMapper = UserRankingItemMapper()
-
-        table.createIfNotExist()
     }
 
     @Test
@@ -63,8 +30,9 @@ class TableTest {
             }
         }.toList()
 
-        then(result).isEmpty()
+        BDDAssertions.then(result).isEmpty()
     }
+
 
     @Test
     fun `query for single existent element returns it`() = runBlocking<Unit> {
@@ -83,7 +51,7 @@ class TableTest {
             }
         }.toList()
 
-        then(result).containsExactly(UserRanking(USERNAME_1, 5))
+        BDDAssertions.then(result).containsExactly(UserRanking(USERNAME_1, 5))
     }
 
 
@@ -97,7 +65,7 @@ class TableTest {
             mappingItems(itemMapper::fromItem)
         }.toList()
 
-        then(result).isEmpty()
+        BDDAssertions.then(result).isEmpty()
     }
 
     @Test
@@ -114,7 +82,7 @@ class TableTest {
             mappingItems(itemMapper::fromItem)
         }.toList()
 
-        then(result).containsExactlyInAnyOrder(
+        BDDAssertions.then(result).containsExactlyInAnyOrder(
             UserRanking(USERNAME_1, 5),
             UserRanking(USERNAME_2, 10),
             UserRanking(USERNAME_3, 15)
@@ -139,6 +107,6 @@ class TableTest {
             mappingItems(itemMapper::fromItem)
         }.toList()
 
-        then(result).containsExactlyInAnyOrder(UserRanking(USERNAME_1, 10))
+        BDDAssertions.then(result).containsExactlyInAnyOrder(UserRanking(USERNAME_1, 10))
     }
 }
