@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
-class SyncClientTable(private val dynamoDbClient: DynamoDbClient, private val tableDefinition: TableDefinition) : Table {
+class SyncClientTable<T: Any>(private val dynamoDbClient: DynamoDbClient, private val tableDefinition: TableDefinition<T>) : Table<T> {
     private val tableSupport = TableSupport(tableDefinition)
 
     override suspend fun create() {
@@ -34,8 +34,8 @@ class SyncClientTable(private val dynamoDbClient: DynamoDbClient, private val ta
     }
 
 
-    override fun <T : Any> query(block: Query<T>.() -> Unit): Flow<T> {
-        val queryBuilder = Query<T>(tableDefinition)
+    override fun query(block: Query<T>.() -> Unit): Flow<T> {
+        val queryBuilder = Query(tableDefinition)
 
         block.invoke(queryBuilder)
 
@@ -57,7 +57,7 @@ class SyncClientTable(private val dynamoDbClient: DynamoDbClient, private val ta
         }
     }
 
-    override suspend fun <T : Any> put(value: T, toItem: (T) -> Attributes) = withContext(Dispatchers.IO) {
+    override suspend fun  put(value: T, toItem: (T) -> Attributes) = withContext(Dispatchers.IO) {
 
         val putItemRequest = tableSupport.buildPutItemRequest(toItem, value)
 
@@ -66,7 +66,7 @@ class SyncClientTable(private val dynamoDbClient: DynamoDbClient, private val ta
         Unit
     }
 
-    override suspend fun <T : Any> scan(block: Scan<T>.() -> Unit): Flow<T> {
+    override fun  scan(block: Scan<T>.() -> Unit): Flow<T> {
         val scanBuilder = Scan<T>(tableDefinition)
 
         block.invoke(scanBuilder)
@@ -89,7 +89,7 @@ class SyncClientTable(private val dynamoDbClient: DynamoDbClient, private val ta
         }
     }
 
-    override suspend fun update(update: Update.() -> Unit) {
+    override suspend fun update(update: Update<T>.() -> Unit) {
         val updateBuilder = Update(tableDefinition)
         update(updateBuilder)
 

@@ -1,8 +1,12 @@
 package ar.ferman.dynamodb.dsl.async
 
-import ar.ferman.dynamodb.dsl.*
+import ar.ferman.dynamodb.dsl.DynamoDbForTests
+import ar.ferman.dynamodb.dsl.TableContractTest
+import ar.ferman.dynamodb.dsl.createTable
+import ar.ferman.dynamodb.dsl.example.ranking.UserRanking
 import ar.ferman.dynamodb.dsl.example.ranking.UserRankingItemMapper
 import ar.ferman.dynamodb.dsl.example.ranking.UserRankingTable
+import ar.ferman.dynamodb.dsl.recreate
 import ar.ferman.dynamodb.dsl.utils.KGenericContainer
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
@@ -26,10 +30,9 @@ class AsyncClientTableTest : TableContractTest() {
         dynamoDbClient = DynamoDbForTests.createAsyncClient(dynamoDbContainer)
         table = AsyncClientTable(
             dynamoDbClient,
-            TableDefinition(
-                name = UserRankingTable.TableName,
-                hashKey = TableKeyAttribute(UserRankingTable.UserId, AttributeType.STRING)
-            )
+            createTable(UserRankingTable.TableName) {
+                hashKey(UserRankingTable.UserId, String::class, UserRanking::userId)
+            }
         )
         itemMapper = UserRankingItemMapper()
 

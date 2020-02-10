@@ -16,10 +16,10 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 
-class AsyncClientTable(
+class AsyncClientTable<T: Any>(
     private val dynamoDbClient: DynamoDbAsyncClient,
-    private val tableDefinition: TableDefinition
-) : Table {
+    private val tableDefinition: TableDefinition<T>
+) : Table<T> {
 
     private val tableSupport = TableSupport(tableDefinition)
 
@@ -51,8 +51,8 @@ class AsyncClientTable(
         }
     }
 
-    override fun <T : Any> query(block: Query<T>.() -> Unit): Flow<T> {
-        val queryBuilder = Query<T>(tableDefinition)
+    override fun query(block: Query<T>.() -> Unit): Flow<T> {
+        val queryBuilder = Query(tableDefinition)
 
         block.invoke(queryBuilder)
 
@@ -81,7 +81,7 @@ class AsyncClientTable(
         }
     }
 
-    override suspend fun <T : Any> put(value: T, toItem: (T) -> Attributes) {
+    override suspend fun put(value: T, toItem: (T) -> Attributes) {
         val putItemRequest = tableSupport.buildPutItemRequest(toItem, value)
 
         return suspendCoroutine { continuation ->
@@ -95,8 +95,8 @@ class AsyncClientTable(
         }
     }
 
-    override suspend fun <T : Any> scan(block: Scan<T>.() -> Unit): Flow<T> {
-        val scanBuilder = Scan<T>(tableDefinition)
+    override fun scan(block: Scan<T>.() -> Unit): Flow<T> {
+        val scanBuilder = Scan(tableDefinition)
 
         block.invoke(scanBuilder)
 
@@ -122,7 +122,7 @@ class AsyncClientTable(
     }
 
 
-    override suspend fun update(update: Update.() -> Unit) {
+    override suspend fun update(update: Update<T>.() -> Unit) {
 
         val updateBuilder = Update(tableDefinition)
         update(updateBuilder)

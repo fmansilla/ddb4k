@@ -1,14 +1,15 @@
 package ar.ferman.dynamodb.dsl
 
 import software.amazon.awssdk.services.dynamodb.model.*
+import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition
 
-class TableSupport(private val tableDefinition: TableDefinition) {
+class TableSupport<T: Any>(private val tableDefinition: TableDefinition<T>) {
 
     fun buildCreateTableRequest(): CreateTableRequest {
         val keySchemaElements = mutableListOf<KeySchemaElement>()
         val keyAttributeDefinitions = mutableListOf<AttributeDefinition>()
 
-        tableDefinition.hashKey.apply {
+        tableDefinition.hashKey!!.apply {
             keySchemaElements.add(
                 KeySchemaElement.builder().attributeName(name).keyType(
                     KeyType.HASH
@@ -27,7 +28,7 @@ class TableSupport(private val tableDefinition: TableDefinition) {
         }
 
         return CreateTableRequest.builder()
-            .tableName(tableDefinition.name)
+            .tableName(tableDefinition.tableName)
             .keySchema(keySchemaElements)
             .attributeDefinitions(keyAttributeDefinitions)
             .billingMode(BillingMode.PAY_PER_REQUEST)
@@ -36,12 +37,12 @@ class TableSupport(private val tableDefinition: TableDefinition) {
 
     fun buildDeleteTableRequest(): DeleteTableRequest {
         return DeleteTableRequest.builder()
-            .tableName(tableDefinition.name)
+            .tableName(tableDefinition.tableName)
             .build()
     }
 
     fun <T : Any> buildPutItemRequest(toItem: (T) -> Attributes, value: T): PutItemRequest {
-        return PutItemRequest.builder().tableName(tableDefinition.name).item(toItem(value)).build()
+        return PutItemRequest.builder().tableName(tableDefinition.tableName).item(toItem(value)).build()
     }
 
     private fun AttributeType.toAttributeType(): ScalarAttributeType {

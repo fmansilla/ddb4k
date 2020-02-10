@@ -4,8 +4,8 @@ import ar.ferman.dynamodb.dsl.Attributes
 import ar.ferman.dynamodb.dsl.TableDefinition
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 
-class Query<T>(tableDefinition: TableDefinition) {
-    private val queryRequestBuilder = QueryRequest.builder().tableName(tableDefinition.name)
+class Query<T: Any>(tableDefinition: TableDefinition<T>) {
+    private val queryRequestBuilder = QueryRequest.builder().tableName(tableDefinition.tableName)
 
     internal lateinit var mapper: (Attributes) -> T
 

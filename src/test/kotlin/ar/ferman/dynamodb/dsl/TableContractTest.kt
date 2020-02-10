@@ -8,7 +8,7 @@ import org.assertj.core.api.BDDAssertions
 import org.junit.jupiter.api.Test
 
 abstract class TableContractTest {
-    protected lateinit var table: Table
+    protected lateinit var table: Table<UserRanking>
     protected lateinit var itemMapper: ItemMapper<UserRanking>
 
     companion object {
@@ -19,7 +19,7 @@ abstract class TableContractTest {
 
     @Test
     fun `query for non existent elements returns empty`() = runBlocking<Unit> {
-        val result = table.query<UserRanking> {
+        val result = table.query {
             attributes(
                 UserRankingTable.UserId,
                 UserRankingTable.Score
@@ -40,7 +40,7 @@ abstract class TableContractTest {
         table.put(UserRanking(USERNAME_2, 10), itemMapper::toItem)
         table.put(UserRanking(USERNAME_3, 15), itemMapper::toItem)
 
-        val result = table.query<UserRanking> {
+        val result = table.query {
             attributes(
                 UserRankingTable.UserId,
                 UserRankingTable.Score
@@ -57,7 +57,7 @@ abstract class TableContractTest {
 
     @Test
     fun `scan empty table does not return items`() = runBlocking<Unit> {
-        val result = table.scan<UserRanking> {
+        val result = table.scan {
             attributes(
                 UserRankingTable.UserId,
                 UserRankingTable.Score
@@ -74,7 +74,7 @@ abstract class TableContractTest {
         table.put(UserRanking(USERNAME_2, 10), itemMapper::toItem)
         table.put(UserRanking(USERNAME_3, 15), itemMapper::toItem)
 
-        val result = table.scan<UserRanking> {
+        val result = table.scan {
             attributes(
                 UserRankingTable.UserId,
                 UserRankingTable.Score
@@ -99,7 +99,7 @@ abstract class TableContractTest {
             }
         }
 
-        val result = table.scan<UserRanking> {
+        val result = table.scan {
             attributes(
                 UserRankingTable.UserId,
                 UserRankingTable.Score

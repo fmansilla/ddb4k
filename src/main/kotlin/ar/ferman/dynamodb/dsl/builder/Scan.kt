@@ -4,8 +4,8 @@ import ar.ferman.dynamodb.dsl.Attributes
 import ar.ferman.dynamodb.dsl.TableDefinition
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest
 
-class Scan<T>(tableDefinition: TableDefinition) {
-    private val scanRequestBuilder = ScanRequest.builder().tableName(tableDefinition.name)
+class Scan<T: Any>(tableDefinition: TableDefinition<T>) {
+    private val scanRequestBuilder = ScanRequest.builder().tableName(tableDefinition.tableName)
     internal lateinit var mapper: (Attributes) -> T
 
     fun attributes(vararg path: String) {

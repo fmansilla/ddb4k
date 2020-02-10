@@ -5,8 +5,8 @@ import ar.ferman.dynamodb.dsl.toAttributeValue
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest
 
-class Update(tableDefinition: TableDefinition) {
-    private val updateItemRequest = UpdateItemRequest.builder().tableName(tableDefinition.name)
+class Update<T: Any>(tableDefinition: TableDefinition<T>) {
+    private val updateItemRequest = UpdateItemRequest.builder().tableName(tableDefinition.tableName)
 
     private val updateExpressions = mutableMapOf<String, MutableList<String>>()
     private val updateExpressionAttributes = mutableMapOf<String, AttributeValue>()
