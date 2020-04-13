@@ -1,14 +1,14 @@
 package ar.ferman.dynamodb.dsl
 
-import ar.ferman.dynamodb.dsl.example.ranking.UserRanking
-import ar.ferman.dynamodb.dsl.example.ranking.UserRankingTable
+import ar.ferman.dynamodb.dsl.example.data.ExampleData
+import ar.ferman.dynamodb.dsl.example.data.ExampleTable
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.BDDAssertions.then
 import org.junit.jupiter.api.Test
 
 abstract class TableContractTest {
-    protected lateinit var table: Table<UserRanking>
+    protected lateinit var table: Table<ExampleData>
 
     companion object {
         private const val USERNAME_1 = "username_1"
@@ -21,7 +21,7 @@ abstract class TableContractTest {
         val result = table.query {
             withConsistentRead()
             where {
-                UserRankingTable.UserId eq USERNAME_1
+                ExampleTable.UserId eq USERNAME_1
             }
         }.toList()
 
@@ -31,17 +31,17 @@ abstract class TableContractTest {
 
     @Test
     fun `query for single existent element returns it`() = runBlocking<Unit> {
-        table.put(UserRanking(USERNAME_1, 5))
-        table.put(UserRanking(USERNAME_2, 10))
-        table.put(UserRanking(USERNAME_3, 15))
+        table.put(ExampleData(USERNAME_1, 5))
+        table.put(ExampleData(USERNAME_2, 10))
+        table.put(ExampleData(USERNAME_3, 15))
 
         val result = table.query {
             where {
-                UserRankingTable.UserId eq USERNAME_1
+                ExampleTable.UserId eq USERNAME_1
             }
         }.toList()
 
-        then(result).containsExactly(UserRanking(USERNAME_1, 5))
+        then(result).containsExactly(ExampleData(USERNAME_1, 5))
     }
 
 
@@ -55,33 +55,33 @@ abstract class TableContractTest {
 
     @Test
     fun `scan non empty table return all items`() = runBlocking<Unit> {
-        table.put(UserRanking(USERNAME_1, 5))
-        table.put(UserRanking(USERNAME_2, 10))
-        table.put(UserRanking(USERNAME_3, 15))
+        table.put(ExampleData(USERNAME_1, 5))
+        table.put(ExampleData(USERNAME_2, 10))
+        table.put(ExampleData(USERNAME_3, 15))
 
         val result = table.scan {
         }.toList()
 
         then(result).containsExactlyInAnyOrder(
-            UserRanking(USERNAME_1, 5),
-            UserRanking(USERNAME_2, 10),
-            UserRanking(USERNAME_3, 15)
+            ExampleData(USERNAME_1, 5),
+            ExampleData(USERNAME_2, 10),
+            ExampleData(USERNAME_3, 15)
         )
     }
 
     @Test
     fun `update only some attributes`() = runBlocking<Unit> {
-        table.put(UserRanking(USERNAME_1, 5))
+        table.put(ExampleData(USERNAME_1, 5))
         table.update {
-            set(UserRankingTable.Score, 10)
+            set(ExampleTable.Score, 10)
             where {
-                UserRankingTable.UserId eq USERNAME_1
+                ExampleTable.UserId eq USERNAME_1
             }
         }
 
         val result = table.scan {
         }.toList()
 
-        then(result).containsExactlyInAnyOrder(UserRanking(USERNAME_1, 10, null, null, null))
+        then(result).containsExactlyInAnyOrder(ExampleData(USERNAME_1, 10))
     }
 }

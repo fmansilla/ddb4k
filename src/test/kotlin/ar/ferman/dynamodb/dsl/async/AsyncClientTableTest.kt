@@ -3,8 +3,8 @@ package ar.ferman.dynamodb.dsl.async
 import ar.ferman.dynamodb.dsl.DynamoDbForTests
 import ar.ferman.dynamodb.dsl.TableContractTest
 import ar.ferman.dynamodb.dsl.createTable
-import ar.ferman.dynamodb.dsl.example.ranking.UserRanking
-import ar.ferman.dynamodb.dsl.example.ranking.UserRankingTable
+import ar.ferman.dynamodb.dsl.example.data.ExampleData
+import ar.ferman.dynamodb.dsl.example.data.ExampleTable
 import ar.ferman.dynamodb.dsl.recreate
 import ar.ferman.dynamodb.dsl.utils.KGenericContainer
 import kotlinx.coroutines.runBlocking
@@ -29,9 +29,9 @@ class AsyncClientTableTest : TableContractTest() {
         dynamoDbClient = DynamoDbForTests.createAsyncClient(dynamoDbContainer)
         table = AsyncClientTable(
             dynamoDbClient,
-            createTable(UserRankingTable.TableName) {
-                hashKey(UserRankingTable.UserId, String::class, UserRanking::userId)
-                attribute(UserRankingTable.Score, Int::class, UserRanking::score)
+            createTable(ExampleTable.TableName) {
+                hashKey(ExampleTable.UserId, String::class, ExampleData::userId)
+                attribute(ExampleTable.Score, Int::class, ExampleData::score)
             }
         )
         table.recreate()

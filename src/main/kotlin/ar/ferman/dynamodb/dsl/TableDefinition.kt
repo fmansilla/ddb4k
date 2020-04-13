@@ -9,9 +9,12 @@ import kotlin.reflect.full.isSubclassOf
 enum class AttributeType(
     private val builderType: (AttributeValue.Builder, Any) -> AttributeValue.Builder
 ) {
-    STRING({builder, value -> builder.s(value as String)}),
-    NUMBER({builder, value -> builder.n(value as String)}),
-    BOOLEAN({builder, value -> builder.bool(value as Boolean)});
+    STRING({ builder, value -> builder.s(value as String) }),
+    INT({ builder, value -> builder.n(value as String) }),
+    LONG({ builder, value -> builder.n(value as String) }),
+    FLOAT({ builder, value -> builder.n(value as String) }),
+    DOUBLE({ builder, value -> builder.n(value as String) }),
+    BOOLEAN({ builder, value -> builder.bool(value as Boolean) });
 
     fun buildAttributeValue(value: Any): AttributeValue {
         val builder = AttributeValue.builder()
@@ -21,9 +24,8 @@ enum class AttributeType(
 
     private fun convertPrimitiveValue(value: Any): Any {
         return when (this) {
-            STRING -> value as String
-            NUMBER -> (value as Number).toInt().toString() //TODO support all primitive types
-            BOOLEAN -> value as Boolean
+            STRING, BOOLEAN -> value
+            INT, LONG, FLOAT, DOUBLE -> value.toString()
         }
     }
 
@@ -31,7 +33,10 @@ enum class AttributeType(
         if (attributeValue == null) return null
         return when (this) {
             STRING -> attributeValue.s()
-            NUMBER -> attributeValue.n().toInt()
+            INT -> attributeValue.n().toInt()
+            LONG -> attributeValue.n().toLong()
+            FLOAT -> attributeValue.n().toFloat()
+            DOUBLE -> attributeValue.n().toDouble()
             BOOLEAN -> attributeValue.bool()
         }
     }
@@ -39,7 +44,10 @@ enum class AttributeType(
     companion object {
         fun from(type: KClass<*>): AttributeType = when {
             type == String::class -> STRING
-            type.isSubclassOf(Number::class) -> NUMBER
+            type.isSubclassOf(Int::class) -> INT
+            type.isSubclassOf(Long::class) -> LONG
+            type.isSubclassOf(Float::class) -> FLOAT
+            type.isSubclassOf(Number::class) -> DOUBLE
             type.isSubclassOf(Boolean::class) -> BOOLEAN
             else -> throw RuntimeException("Unsupported type")//TODO custom exception
         }
@@ -72,11 +80,11 @@ class TableDefinition<T : Any>(
         private set
     val attributes = mutableListOf<AttributeDefinition>()
 
-    val allAttributes : List<AttributeDefinition>
+    val allAttributes: List<AttributeDefinition>
         get() = mutableListOf<AttributeDefinition>().apply {
             addAll(attributes)
-            if(hashKey !=null) add(hashKey!!)
-            if(sortKey !=null) add(sortKey!!)
+            if (hashKey != null) add(hashKey!!)
+            if (sortKey != null) add(sortKey!!)
         }
 
     init {
@@ -135,5 +143,4 @@ class TableDefinition<T : Any>(
             }
         }
     }
-
 }

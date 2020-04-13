@@ -48,7 +48,7 @@ class TableSupport<T : Any>(private val tableDefinition: TableDefinition<T>) {
     private fun AttributeType.toAttributeType(): ScalarAttributeType {
         return when (this) {
             AttributeType.STRING -> ScalarAttributeType.S
-            AttributeType.NUMBER -> ScalarAttributeType.N
+            AttributeType.LONG -> ScalarAttributeType.N
             else -> throw RuntimeException("Invalid key attribute type, only String or Number are allowed")//TODO custom exception
         }
     }
