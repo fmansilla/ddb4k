@@ -1,28 +1,36 @@
 package ar.ferman.dynamodb.dsl
 
+import ar.ferman.dynamodb.dsl.example.ranking.UserRanking
 import org.assertj.core.api.BDDAssertions.assertThat
 import org.junit.jupiter.api.Test
 
 
 internal class TableDefinitionTest {
-    data class UserRanking2(var userId: String? = null, var score: Int? = null)
 
     @Test
     internal fun `create item from value`() {
-        val tableDef = createTable<UserRanking2>("prueba") {
-            hashKey("user_id", String::class, UserRanking2::userId)
-            sortKey("score", Int::class, UserRanking2::score)
+        val tableDef = createTable<UserRanking>("prueba") {
+            hashKey("user_id", String::class, UserRanking::userId)
+            sortKey("score", Int::class, UserRanking::score)
+            attribute("att_int", Int::class, UserRanking::attInt)
+            attribute("att_string", String::class, UserRanking::attString)
         }
 
-        val item = tableDef.toItem(UserRanking2("ferman", 100))
+        val userRanking = UserRanking("ferman", 100).apply {
+            attInt = 25
+            attString = "example"
+        }
+        val item = tableDef.toItem(userRanking)
 
         println(item)
 
-        val orig = tableDef.fromItem(item)
+        val userRankingFromItem = tableDef.fromItem(item)
 
-        println(orig)
+        println(userRankingFromItem)
 
-        assertThat(orig.userId).isEqualTo("ferman")
-        assertThat(orig.score).isEqualTo(100)
+        assertThat(userRankingFromItem).isEqualTo(UserRanking("ferman", 100).apply {
+            attInt = 25
+            attString = "example"
+        })
     }
 }

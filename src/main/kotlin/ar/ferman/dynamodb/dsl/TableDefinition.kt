@@ -69,6 +69,13 @@ class TableDefinition<T : Any>(
         private set
     val attributes = mutableListOf<AttributeDefinition>()
 
+    val allAttributes : List<AttributeDefinition>
+        get() = mutableListOf<AttributeDefinition>().apply {
+            addAll(attributes)
+            if(hashKey !=null) add(hashKey!!)
+            if(sortKey !=null) add(sortKey!!)
+        }
+
     init {
         initialization.invoke(this)
     }

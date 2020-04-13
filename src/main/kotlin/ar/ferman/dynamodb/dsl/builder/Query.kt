@@ -4,19 +4,13 @@ import ar.ferman.dynamodb.dsl.Attributes
 import ar.ferman.dynamodb.dsl.TableDefinition
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 
-class Query<T: Any>(tableDefinition: TableDefinition<T>) {
+class Query<T: Any>(private val tableDefinition: TableDefinition<T>) {
     private val queryRequestBuilder = QueryRequest.builder().tableName(tableDefinition.tableName)
 
-    internal lateinit var mapper: (Attributes) -> T
+    internal val mapper: (Attributes) -> T = tableDefinition::fromItem
 
-    fun attributes(vararg path: String) {
-        //Puede utilizar cualquier nombre de atributo en una expresión de proyección, siempre y cuando el primer carácter sea a-z o A-Z y el segundo carácter (si lo hay) sea a-z, A-Z o 0-9
-        //TODO validate path Description, RelatedItems[0], ProductReviews.FiveStar
-        queryRequestBuilder.projectionExpression(path.joinToString(separator = ","))
-    }
-
-    fun mappingItems(itemMapper: (Attributes) -> T) {
-        this.mapper = itemMapper
+    fun withConsistentRead() {
+        queryRequestBuilder.consistentRead(true)
     }
 
     fun where(block: QueryCondition.() -> Unit) {

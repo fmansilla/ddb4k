@@ -32,6 +32,7 @@ class SyncClientTableTest : TableContractTest() {
             dynamoDbClient,
             createTable(UserRankingTable.TableName) {
                 hashKey(UserRankingTable.UserId, String::class, UserRanking::userId)
+                attribute(UserRankingTable.Score, Int::class, UserRanking::score)
             }
         )
         itemMapper = UserRankingItemMapper()

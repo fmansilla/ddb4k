@@ -20,11 +20,7 @@ abstract class TableContractTest {
     @Test
     fun `query for non existent elements returns empty`() = runBlocking<Unit> {
         val result = table.query {
-            attributes(
-                UserRankingTable.UserId,
-                UserRankingTable.Score
-            )
-            mappingItems(itemMapper::fromItem)
+            withConsistentRead()
             where {
                 UserRankingTable.UserId eq USERNAME_1
             }
@@ -41,11 +37,6 @@ abstract class TableContractTest {
         table.put(UserRanking(USERNAME_3, 15), itemMapper::toItem)
 
         val result = table.query {
-            attributes(
-                UserRankingTable.UserId,
-                UserRankingTable.Score
-            )
-            mappingItems(itemMapper::fromItem)
             where {
                 UserRankingTable.UserId eq USERNAME_1
             }
