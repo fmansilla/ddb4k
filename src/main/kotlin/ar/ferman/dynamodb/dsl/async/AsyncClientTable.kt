@@ -1,6 +1,5 @@
 package ar.ferman.dynamodb.dsl.async
 
-import ar.ferman.dynamodb.dsl.Attributes
 import ar.ferman.dynamodb.dsl.Table
 import ar.ferman.dynamodb.dsl.TableDefinition
 import ar.ferman.dynamodb.dsl.TableSupport
@@ -81,8 +80,8 @@ class AsyncClientTable<T: Any>(
         }
     }
 
-    override suspend fun put(value: T, toItem: (T) -> Attributes) {
-        val putItemRequest = tableSupport.buildPutItemRequest(toItem, value)
+    override suspend fun put(value: T) {
+        val putItemRequest = tableSupport.buildPutItemRequest(value)
 
         return suspendCoroutine { continuation ->
             dynamoDbClient.putItem(putItemRequest).whenComplete { _, error ->

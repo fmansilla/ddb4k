@@ -4,7 +4,6 @@ import ar.ferman.dynamodb.dsl.DynamoDbForTests
 import ar.ferman.dynamodb.dsl.TableContractTest
 import ar.ferman.dynamodb.dsl.createTable
 import ar.ferman.dynamodb.dsl.example.ranking.UserRanking
-import ar.ferman.dynamodb.dsl.example.ranking.UserRankingItemMapper
 import ar.ferman.dynamodb.dsl.example.ranking.UserRankingTable
 import ar.ferman.dynamodb.dsl.recreate
 import ar.ferman.dynamodb.dsl.utils.KGenericContainer
@@ -35,8 +34,6 @@ class AsyncClientTableTest : TableContractTest() {
                 attribute(UserRankingTable.Score, Int::class, UserRanking::score)
             }
         )
-        itemMapper = UserRankingItemMapper()
-
         table.recreate()
     }
 }

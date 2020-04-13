@@ -1,6 +1,5 @@
 package ar.ferman.dynamodb.dsl.sync
 
-import ar.ferman.dynamodb.dsl.Attributes
 import ar.ferman.dynamodb.dsl.Table
 import ar.ferman.dynamodb.dsl.TableDefinition
 import ar.ferman.dynamodb.dsl.TableSupport
@@ -57,9 +56,8 @@ class SyncClientTable<T: Any>(private val dynamoDbClient: DynamoDbClient, privat
         }
     }
 
-    override suspend fun  put(value: T, toItem: (T) -> Attributes) = withContext(Dispatchers.IO) {
-
-        val putItemRequest = tableSupport.buildPutItemRequest(toItem, value)
+    override suspend fun  put(value: T) = withContext(Dispatchers.IO) {
+        val putItemRequest = tableSupport.buildPutItemRequest(value)
 
         dynamoDbClient.putItem(putItemRequest)
 

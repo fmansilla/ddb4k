@@ -41,8 +41,8 @@ class TableSupport<T: Any>(private val tableDefinition: TableDefinition<T>) {
             .build()
     }
 
-    fun <T : Any> buildPutItemRequest(toItem: (T) -> Attributes, value: T): PutItemRequest {
-        return PutItemRequest.builder().tableName(tableDefinition.tableName).item(toItem(value)).build()
+    fun buildPutItemRequest(value: T): PutItemRequest {
+        return PutItemRequest.builder().tableName(tableDefinition.tableName).item(tableDefinition.toItem(value)).build()
     }
 
     private fun AttributeType.toAttributeType(): ScalarAttributeType {

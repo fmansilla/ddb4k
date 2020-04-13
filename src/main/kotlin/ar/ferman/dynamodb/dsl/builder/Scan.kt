@@ -4,17 +4,15 @@ import ar.ferman.dynamodb.dsl.Attributes
 import ar.ferman.dynamodb.dsl.TableDefinition
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest
 
-class Scan<T: Any>(tableDefinition: TableDefinition<T>) {
+class Scan<T : Any>(tableDefinition: TableDefinition<T>) {
     private val scanRequestBuilder = ScanRequest.builder().tableName(tableDefinition.tableName)
-    internal lateinit var mapper: (Attributes) -> T
+    internal var mapper: (Attributes) -> T = tableDefinition::fromItem
 
-    fun attributes(vararg path: String) {
-        //Puede utilizar cualquier nombre de atributo en una expresión de proyección, siempre y cuando el primer carácter sea a-z o A-Z y el segundo carácter (si lo hay) sea a-z, A-Z o 0-9
-        //TODO validate path Description, RelatedItems[0], ProductReviews.FiveStar
-        scanRequestBuilder.projectionExpression(path.joinToString(separator = ","))
+    fun withConsistentRead() {
+        scanRequestBuilder.consistentRead(true)
     }
 
-    fun limit(maxItems: Int){
+    fun limit(maxItems: Int) {
         scanRequestBuilder.limit(maxItems)
     }
 
@@ -23,9 +21,9 @@ class Scan<T: Any>(tableDefinition: TableDefinition<T>) {
     }
 
     fun build(lastEvaluatedKey: Attributes): ScanRequest {
-        val builder = if(lastEvaluatedKey.isNotEmpty()){
+        val builder = if (lastEvaluatedKey.isNotEmpty()) {
             scanRequestBuilder.copy().exclusiveStartKey(lastEvaluatedKey)
-        }else {
+        } else {
             scanRequestBuilder
         }
         return builder.build()

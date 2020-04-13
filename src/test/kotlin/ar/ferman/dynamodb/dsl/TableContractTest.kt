@@ -4,12 +4,11 @@ import ar.ferman.dynamodb.dsl.example.ranking.UserRanking
 import ar.ferman.dynamodb.dsl.example.ranking.UserRankingTable
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
-import org.assertj.core.api.BDDAssertions
+import org.assertj.core.api.BDDAssertions.then
 import org.junit.jupiter.api.Test
 
 abstract class TableContractTest {
     protected lateinit var table: Table<UserRanking>
-    protected lateinit var itemMapper: ItemMapper<UserRanking>
 
     companion object {
         private const val USERNAME_1 = "username_1"
@@ -26,15 +25,15 @@ abstract class TableContractTest {
             }
         }.toList()
 
-        BDDAssertions.then(result).isEmpty()
+        then(result).isEmpty()
     }
 
 
     @Test
     fun `query for single existent element returns it`() = runBlocking<Unit> {
-        table.put(UserRanking(USERNAME_1, 5), itemMapper::toItem)
-        table.put(UserRanking(USERNAME_2, 10), itemMapper::toItem)
-        table.put(UserRanking(USERNAME_3, 15), itemMapper::toItem)
+        table.put(UserRanking(USERNAME_1, 5))
+        table.put(UserRanking(USERNAME_2, 10))
+        table.put(UserRanking(USERNAME_3, 15))
 
         val result = table.query {
             where {
@@ -42,38 +41,28 @@ abstract class TableContractTest {
             }
         }.toList()
 
-        BDDAssertions.then(result).containsExactly(UserRanking(USERNAME_1, 5))
+        then(result).containsExactly(UserRanking(USERNAME_1, 5))
     }
 
 
     @Test
     fun `scan empty table does not return items`() = runBlocking<Unit> {
         val result = table.scan {
-            attributes(
-                UserRankingTable.UserId,
-                UserRankingTable.Score
-            )
-            mappingItems(itemMapper::fromItem)
         }.toList()
 
-        BDDAssertions.then(result).isEmpty()
+        then(result).isEmpty()
     }
 
     @Test
     fun `scan non empty table return all items`() = runBlocking<Unit> {
-        table.put(UserRanking(USERNAME_1, 5), itemMapper::toItem)
-        table.put(UserRanking(USERNAME_2, 10), itemMapper::toItem)
-        table.put(UserRanking(USERNAME_3, 15), itemMapper::toItem)
+        table.put(UserRanking(USERNAME_1, 5))
+        table.put(UserRanking(USERNAME_2, 10))
+        table.put(UserRanking(USERNAME_3, 15))
 
         val result = table.scan {
-            attributes(
-                UserRankingTable.UserId,
-                UserRankingTable.Score
-            )
-            mappingItems(itemMapper::fromItem)
         }.toList()
 
-        BDDAssertions.then(result).containsExactlyInAnyOrder(
+        then(result).containsExactlyInAnyOrder(
             UserRanking(USERNAME_1, 5),
             UserRanking(USERNAME_2, 10),
             UserRanking(USERNAME_3, 15)
@@ -82,7 +71,7 @@ abstract class TableContractTest {
 
     @Test
     fun `update only some attributes`() = runBlocking<Unit> {
-        table.put(UserRanking(USERNAME_1, 5), itemMapper::toItem)
+        table.put(UserRanking(USERNAME_1, 5))
         table.update {
             set(UserRankingTable.Score, 10)
             where {
@@ -91,13 +80,8 @@ abstract class TableContractTest {
         }
 
         val result = table.scan {
-            attributes(
-                UserRankingTable.UserId,
-                UserRankingTable.Score
-            )
-            mappingItems(itemMapper::fromItem)
         }.toList()
 
-        BDDAssertions.then(result).containsExactlyInAnyOrder(UserRanking(USERNAME_1, 10))
+        then(result).containsExactlyInAnyOrder(UserRanking(USERNAME_1, 10, null, null))
     }
 }
