@@ -82,6 +82,6 @@ abstract class TableContractTest {
         val result = table.scan {
         }.toList()
 
-        then(result).containsExactlyInAnyOrder(UserRanking(USERNAME_1, 10, null, null))
+        then(result).containsExactlyInAnyOrder(UserRanking(USERNAME_1, 10, null, null, null))
     }
 }

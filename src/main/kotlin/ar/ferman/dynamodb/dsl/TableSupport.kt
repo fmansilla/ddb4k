@@ -3,7 +3,7 @@ package ar.ferman.dynamodb.dsl
 import software.amazon.awssdk.services.dynamodb.model.*
 import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition
 
-class TableSupport<T: Any>(private val tableDefinition: TableDefinition<T>) {
+class TableSupport<T : Any>(private val tableDefinition: TableDefinition<T>) {
 
     fun buildCreateTableRequest(): CreateTableRequest {
         val keySchemaElements = mutableListOf<KeySchemaElement>()
@@ -49,6 +49,7 @@ class TableSupport<T: Any>(private val tableDefinition: TableDefinition<T>) {
         return when (this) {
             AttributeType.STRING -> ScalarAttributeType.S
             AttributeType.NUMBER -> ScalarAttributeType.N
+            else -> throw RuntimeException("Invalid key attribute type, only String or Number are allowed")//TODO custom exception
         }
     }
 }

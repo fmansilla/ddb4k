@@ -14,11 +14,13 @@ internal class TableDefinitionTest {
             sortKey("score", Int::class, UserRanking::score)
             attribute("att_int", Int::class, UserRanking::attInt)
             attribute("att_string", String::class, UserRanking::attString)
+            attribute("att_boolean", Boolean::class, UserRanking::attBoolean)
         }
 
         val userRanking = UserRanking("ferman", 100).apply {
             attInt = 25
             attString = "example"
+            attBoolean = true
         }
         val item = tableDef.toItem(userRanking)
 
@@ -31,6 +33,7 @@ internal class TableDefinitionTest {
         assertThat(userRankingFromItem).isEqualTo(UserRanking("ferman", 100).apply {
             attInt = 25
             attString = "example"
+            attBoolean = true
         })
     }
 }

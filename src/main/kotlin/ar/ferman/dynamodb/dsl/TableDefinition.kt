@@ -2,16 +2,16 @@ package ar.ferman.dynamodb.dsl
 
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import kotlin.reflect.KClass
-import kotlin.reflect.KFunction2
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.isSubclassOf
 
 enum class AttributeType(
-    private val builderType: KFunction2<AttributeValue.Builder, String, AttributeValue.Builder>
+    private val builderType: (AttributeValue.Builder, Any) -> AttributeValue.Builder
 ) {
-    STRING(AttributeValue.Builder::s),
-    NUMBER(AttributeValue.Builder::n);
+    STRING({builder, value -> builder.s(value as String)}),
+    NUMBER({builder, value -> builder.n(value as String)}),
+    BOOLEAN({builder, value -> builder.bool(value as Boolean)});
 
     fun buildAttributeValue(value: Any): AttributeValue {
         val builder = AttributeValue.builder()
@@ -19,10 +19,11 @@ enum class AttributeType(
         return builder.build()
     }
 
-    private fun convertPrimitiveValue(value: Any): String {
+    private fun convertPrimitiveValue(value: Any): Any {
         return when (this) {
             STRING -> value as String
             NUMBER -> (value as Number).toInt().toString() //TODO support all primitive types
+            BOOLEAN -> value as Boolean
         }
     }
 
@@ -31,6 +32,7 @@ enum class AttributeType(
         return when (this) {
             STRING -> attributeValue.s()
             NUMBER -> attributeValue.n().toInt()
+            BOOLEAN -> attributeValue.bool()
         }
     }
 
@@ -38,6 +40,7 @@ enum class AttributeType(
         fun from(type: KClass<*>): AttributeType = when {
             type == String::class -> STRING
             type.isSubclassOf(Number::class) -> NUMBER
+            type.isSubclassOf(Boolean::class) -> BOOLEAN
             else -> throw RuntimeException("Unsupported type")//TODO custom exception
         }
     }
