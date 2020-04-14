@@ -39,13 +39,13 @@ class Update<T: Any>(tableDefinition: TableDefinition<T>) {
         updateExpressions.computeIfAbsent(operation) { mutableListOf() }
 
     fun build(): UpdateItemRequest {
-        val updateExpresion = updateExpressions
+        val updateExpression = updateExpressions
             .map { (type, expressions) -> "$type ${expressions.joinToString(separator = ", ")}"}
             .joinToString(" ")
 
         return updateItemRequest
             .expressionAttributeValues(updateExpressionAttributes)
-            .updateExpression(updateExpresion)
+            .updateExpression(updateExpression)
             .build()
     }
 }
