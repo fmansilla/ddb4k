@@ -46,6 +46,16 @@ class TableSupport<T : Any>(private val tableDefinition: TableDefinition<T>) {
         return PutItemRequest.builder().tableName(tableDefinition.tableName).item(tableDefinition.toItem(value)).build()
     }
 
+    fun buildGetItemRequest(value: T): GetItemRequest {
+        return GetItemRequest.builder().tableName(tableDefinition.tableName).key(tableDefinition.toItemKey(value))
+            .build()
+    }
+
+    fun buildBatchGetItemRequest(values: List<T>): BatchGetItemRequest {
+        val keys = KeysAndAttributes.builder().keys(values.map(tableDefinition::toItemKey)).build()
+        return BatchGetItemRequest.builder().requestItems(mapOf(tableDefinition.tableName to keys)).build()
+    }
+
     private fun AttributeType.toAttributeType(): ScalarAttributeType {
         return when (this) {
             STRING -> ScalarAttributeType.S

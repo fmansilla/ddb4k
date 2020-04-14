@@ -13,4 +13,5 @@ interface Table<T : Any> {
     suspend fun put(value: T)
     fun scan(block: Scan<T>.() -> Unit = {}): Flow<T>
     suspend fun update(update: Update<T>.() -> Unit)
+    suspend fun get(key: T): T?
 }

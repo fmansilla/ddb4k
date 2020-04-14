@@ -106,7 +106,7 @@ class TableDefinition<T : Any>(
         attributes.add(AttributeDefinition(attributeName, attributeType, property))
     }
 
-    fun toItem(value: T): Map<String, AttributeValue> {
+    internal fun toItem(value: T): Map<String, AttributeValue> {
         return mutableMapOf<String, AttributeValue>().apply {
             putAttributeIfAvailable(hashKey!!, value)
             if (sortKey != null) putAttributeIfAvailable(sortKey!!, value)
@@ -114,7 +114,14 @@ class TableDefinition<T : Any>(
         }
     }
 
-    fun fromItem(item: Map<String, AttributeValue>): T {
+    internal fun toItemKey(value: T): Map<String, AttributeValue> {
+        return mutableMapOf<String, AttributeValue>().apply {
+            putAttributeIfAvailable(hashKey!!, value)
+            if (sortKey != null) putAttributeIfAvailable(sortKey!!, value)
+        }
+    }
+
+    internal fun fromItem(item: Map<String, AttributeValue>): T {
         val value = type.createInstance()
         hashKey?.setPropertyValueIfAvailable(item, value)
         sortKey?.setPropertyValueIfAvailable(item, value)

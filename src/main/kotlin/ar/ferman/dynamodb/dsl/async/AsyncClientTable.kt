@@ -16,7 +16,7 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 
-class AsyncClientTable<T: Any>(
+class AsyncClientTable<T : Any>(
     private val dynamoDbClient: DynamoDbAsyncClient,
     private val tableDefinition: TableDefinition<T>
 ) : Table<T> {
@@ -123,7 +123,6 @@ class AsyncClientTable<T: Any>(
 
 
     override suspend fun update(update: Update<T>.() -> Unit) {
-
         val updateBuilder = Update(tableDefinition)
         update(updateBuilder)
 
@@ -140,4 +139,17 @@ class AsyncClientTable<T: Any>(
         }
     }
 
+    override suspend fun get(key: T): T? {
+        val getItemRequest = tableSupport.buildGetItemRequest(key)
+
+        return suspendCoroutine { continuation ->
+            dynamoDbClient.getItem(getItemRequest).whenComplete { response, error ->
+                if (error != null) {
+                    continuation.resumeWithException(error)
+                } else {
+                    continuation.resume(response.item()?.takeIf { !it.isNullOrEmpty() }?.let(tableDefinition::fromItem))
+                }
+            }
+        }
+    }
 }

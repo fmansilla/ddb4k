@@ -14,7 +14,10 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.CreateTableRequest
 
-class SyncClientTable<T: Any>(private val dynamoDbClient: DynamoDbClient, private val tableDefinition: TableDefinition<T>) : Table<T> {
+class SyncClientTable<T : Any>(
+    private val dynamoDbClient: DynamoDbClient,
+    private val tableDefinition: TableDefinition<T>
+) : Table<T> {
     private val tableSupport = TableSupport(tableDefinition)
 
     override suspend fun create(customize: CreateTableRequest.Builder.() -> Unit) {
@@ -57,7 +60,7 @@ class SyncClientTable<T: Any>(private val dynamoDbClient: DynamoDbClient, privat
         }
     }
 
-    override suspend fun  put(value: T) = withContext(Dispatchers.IO) {
+    override suspend fun put(value: T) = withContext(Dispatchers.IO) {
         val putItemRequest = tableSupport.buildPutItemRequest(value)
 
         dynamoDbClient.putItem(putItemRequest)
@@ -65,7 +68,7 @@ class SyncClientTable<T: Any>(private val dynamoDbClient: DynamoDbClient, privat
         Unit
     }
 
-    override fun  scan(block: Scan<T>.() -> Unit): Flow<T> {
+    override fun scan(block: Scan<T>.() -> Unit): Flow<T> {
         val scanBuilder = Scan<T>(tableDefinition)
 
         block.invoke(scanBuilder)
@@ -97,5 +100,13 @@ class SyncClientTable<T: Any>(private val dynamoDbClient: DynamoDbClient, privat
         withContext(Dispatchers.IO) {
             dynamoDbClient.updateItem(updateItemRequest)
         }
+    }
+
+    override suspend fun get(key: T): T? = withContext(Dispatchers.IO) {
+        val getItemRequest = tableSupport.buildGetItemRequest(key)
+
+        dynamoDbClient.getItem(getItemRequest).item()
+            ?.takeIf { !it.isNullOrEmpty() }
+            ?.let(tableDefinition::fromItem)
     }
 }

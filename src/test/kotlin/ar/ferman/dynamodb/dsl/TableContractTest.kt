@@ -17,6 +17,15 @@ abstract class TableContractTest {
     }
 
     @Test
+    fun `get single item by key`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5, attString = "expected value"))
+
+        val result = table.get(ExampleData(USERNAME_1, 5))
+
+        then(result).isEqualTo(ExampleData(USERNAME_1, 5, attString = "expected value"))
+    }
+
+    @Test
     fun `query for non existent elements returns empty`() = runBlocking<Unit> {
         val result = table.query {
             withConsistentRead()
