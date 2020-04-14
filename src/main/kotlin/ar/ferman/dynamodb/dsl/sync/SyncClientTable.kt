@@ -119,4 +119,12 @@ class SyncClientTable<T : Any>(
             }
             ?: emptyList()
     }
+
+    override suspend fun delete(key: T) = withContext(Dispatchers.IO) {
+        val deleteItemRequest = tableSupport.buildDeleteItemRequest(key)
+
+        dynamoDbClient.deleteItem(deleteItemRequest)
+
+        Unit
+    }
 }

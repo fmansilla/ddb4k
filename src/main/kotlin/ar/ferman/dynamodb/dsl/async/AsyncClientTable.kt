@@ -28,11 +28,8 @@ class AsyncClientTable<T : Any>(
 
         return suspendCoroutine { continuation ->
             dynamoDbClient.createTable(createTableRequest).whenComplete { _, error ->
-                if (error != null) {
-                    continuation.resumeWithException(error)
-                } else {
-                    continuation.resume(Unit)
-                }
+                if (error != null) continuation.resumeWithException(error)
+                else continuation.resume(Unit)
             }
         }
     }
@@ -42,11 +39,8 @@ class AsyncClientTable<T : Any>(
 
         return suspendCoroutine { continuation ->
             dynamoDbClient.deleteTable(deleteTableRequest).whenComplete { _, error ->
-                if (error != null) {
-                    continuation.resumeWithException(error)
-                } else {
-                    continuation.resume(Unit)
-                }
+                if (error != null) continuation.resumeWithException(error)
+                else continuation.resume(Unit)
             }
         }
     }
@@ -86,11 +80,8 @@ class AsyncClientTable<T : Any>(
 
         return suspendCoroutine { continuation ->
             dynamoDbClient.putItem(putItemRequest).whenComplete { _, error ->
-                if (error != null) {
-                    continuation.resumeWithException(error)
-                } else {
-                    continuation.resume(Unit)
-                }
+                if (error != null) continuation.resumeWithException(error)
+                else continuation.resume(Unit)
             }
         }
     }
@@ -130,11 +121,8 @@ class AsyncClientTable<T : Any>(
 
         return suspendCoroutine { continuation ->
             dynamoDbClient.updateItem(updateItemRequest).whenComplete { _, error ->
-                if (error != null) {
-                    continuation.resumeWithException(error)
-                } else {
-                    continuation.resume(Unit)
-                }
+                if (error != null) continuation.resumeWithException(error)
+                else continuation.resume(Unit)
             }
         }
     }
@@ -144,11 +132,8 @@ class AsyncClientTable<T : Any>(
 
         return suspendCoroutine { continuation ->
             dynamoDbClient.getItem(getItemRequest).whenComplete { response, error ->
-                if (error != null) {
-                    continuation.resumeWithException(error)
-                } else {
-                    continuation.resume(response.item()?.takeIf { !it.isNullOrEmpty() }?.let(tableDefinition::fromItem))
-                }
+                if (error != null) continuation.resumeWithException(error)
+                else continuation.resume(response.item()?.takeIf { !it.isNullOrEmpty() }?.let(tableDefinition::fromItem))
             }
         }
     }
@@ -158,15 +143,22 @@ class AsyncClientTable<T : Any>(
 
         return suspendCoroutine { continuation ->
             dynamoDbClient.batchGetItem(batchGetItemRequest).whenComplete { response, error ->
-                if (error != null) {
-                    continuation.resumeWithException(error)
-                } else {
-                    continuation.resume(response.responses()[tableDefinition.tableName]
-                        ?.mapNotNull {
-                            it.takeIf { !it.isNullOrEmpty() }?.let(tableDefinition::fromItem)
-                        }
-                        ?: emptyList())
-                }
+                if (error != null) continuation.resumeWithException(error)
+                else continuation.resume(response.responses()[tableDefinition.tableName]
+                    ?.mapNotNull {
+                        it.takeIf { !it.isNullOrEmpty() }?.let(tableDefinition::fromItem)
+                    } ?: emptyList())
+            }
+        }
+    }
+
+    override suspend fun delete(key: T) {
+        val deleteItemRequest = tableSupport.buildDeleteItemRequest(key)
+
+        return suspendCoroutine { continuation ->
+            dynamoDbClient.deleteItem(deleteItemRequest).whenComplete { response, error ->
+                if (error != null) continuation.resumeWithException(error)
+                else continuation.resume(Unit)
             }
         }
     }

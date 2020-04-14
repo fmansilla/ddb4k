@@ -56,6 +56,11 @@ class TableSupport<T : Any>(private val tableDefinition: TableDefinition<T>) {
         return BatchGetItemRequest.builder().requestItems(mapOf(tableDefinition.tableName to keys)).build()
     }
 
+    fun buildDeleteItemRequest(value: T): DeleteItemRequest {
+        return DeleteItemRequest.builder().tableName(tableDefinition.tableName).key(tableDefinition.toItemKey(value))
+            .build()
+    }
+
     private fun AttributeType.toAttributeType(): ScalarAttributeType {
         return when (this) {
             STRING -> ScalarAttributeType.S

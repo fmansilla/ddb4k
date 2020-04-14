@@ -33,6 +33,25 @@ abstract class TableContractTest {
     }
 
     @Test
+    fun `delete existent item`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5, attString = "expected value"))
+
+        table.delete(ExampleData(USERNAME_1, 5))
+
+        then(table.scan().toList()).isEmpty()
+    }
+
+    @Test
+    fun `delete non existent item does not affect other items`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5, attString = "expected value"))
+
+        table.delete(ExampleData(USERNAME_2, 10))
+
+        then(table.scan().toList()).containsExactly(ExampleData(USERNAME_1, 5, attString = "expected value"))
+    }
+
+
+    @Test
     fun `get multiple items by key returns only found`() = runBlocking<Unit> {
         table.put(ExampleData(USERNAME_1, 5, attString = "expected value"))
         table.put(ExampleData(USERNAME_2, 10, attString = "other value"))
