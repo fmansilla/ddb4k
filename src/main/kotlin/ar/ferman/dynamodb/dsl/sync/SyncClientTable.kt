@@ -109,4 +109,14 @@ class SyncClientTable<T : Any>(
             ?.takeIf { !it.isNullOrEmpty() }
             ?.let(tableDefinition::fromItem)
     }
+
+    override suspend fun get(keys: Set<T>): List<T> = withContext(Dispatchers.IO) {
+        val batchGetItemRequest = tableSupport.buildBatchGetItemRequest(keys)
+
+        dynamoDbClient.batchGetItem(batchGetItemRequest).responses()[tableDefinition.tableName]
+            ?.mapNotNull {
+                it.takeIf { !it.isNullOrEmpty() }?.let(tableDefinition::fromItem)
+            }
+            ?: emptyList()
+    }
 }

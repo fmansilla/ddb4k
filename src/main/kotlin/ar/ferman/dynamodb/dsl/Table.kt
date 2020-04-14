@@ -14,4 +14,5 @@ interface Table<T : Any> {
     fun scan(block: Scan<T>.() -> Unit = {}): Flow<T>
     suspend fun update(update: Update<T>.() -> Unit)
     suspend fun get(key: T): T?
+    suspend fun get(keys: Set<T>): List<T>
 }

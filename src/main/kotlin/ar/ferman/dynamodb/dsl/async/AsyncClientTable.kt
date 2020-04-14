@@ -152,4 +152,22 @@ class AsyncClientTable<T : Any>(
             }
         }
     }
+
+    override suspend fun get(keys: Set<T>): List<T> {
+        val batchGetItemRequest = tableSupport.buildBatchGetItemRequest(keys)
+
+        return suspendCoroutine { continuation ->
+            dynamoDbClient.batchGetItem(batchGetItemRequest).whenComplete { response, error ->
+                if (error != null) {
+                    continuation.resumeWithException(error)
+                } else {
+                    continuation.resume(response.responses()[tableDefinition.tableName]
+                        ?.mapNotNull {
+                            it.takeIf { !it.isNullOrEmpty() }?.let(tableDefinition::fromItem)
+                        }
+                        ?: emptyList())
+                }
+            }
+        }
+    }
 }

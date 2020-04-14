@@ -51,7 +51,7 @@ class TableSupport<T : Any>(private val tableDefinition: TableDefinition<T>) {
             .build()
     }
 
-    fun buildBatchGetItemRequest(values: List<T>): BatchGetItemRequest {
+    fun buildBatchGetItemRequest(values: Set<T>): BatchGetItemRequest {
         val keys = KeysAndAttributes.builder().keys(values.map(tableDefinition::toItemKey)).build()
         return BatchGetItemRequest.builder().requestItems(mapOf(tableDefinition.tableName to keys)).build()
     }

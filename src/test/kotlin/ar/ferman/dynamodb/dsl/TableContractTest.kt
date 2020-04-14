@@ -26,6 +26,32 @@ abstract class TableContractTest {
     }
 
     @Test
+    fun `get non existing item by key`() = runBlocking<Unit> {
+        val result = table.get(ExampleData(USERNAME_1, 5))
+
+        then(result).isNull()
+    }
+
+    @Test
+    fun `get multiple items by key returns only found`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5, attString = "expected value"))
+        table.put(ExampleData(USERNAME_2, 10, attString = "other value"))
+
+        val result = table.get(
+            setOf(
+                ExampleData(USERNAME_1, 5),
+                ExampleData(USERNAME_2, 10),
+                ExampleData("missing", 50)
+            )
+        )
+
+        then(result).containsExactlyInAnyOrder(
+            ExampleData(USERNAME_1, 5, attString = "expected value"),
+            ExampleData(USERNAME_2, 10, attString = "other value")
+        )
+    }
+
+    @Test
     fun `query for non existent elements returns empty`() = runBlocking<Unit> {
         val result = table.query {
             withConsistentRead()
