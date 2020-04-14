@@ -1,11 +1,11 @@
 package ar.ferman.dynamodb.dsl
 
+import ar.ferman.dynamodb.dsl.AttributeType.*
 import software.amazon.awssdk.services.dynamodb.model.*
 import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition
 
 class TableSupport<T : Any>(private val tableDefinition: TableDefinition<T>) {
-
-    fun buildCreateTableRequest(): CreateTableRequest {
+    fun buildCreateTableRequest(customize: CreateTableRequest.Builder.() -> Unit): CreateTableRequest {
         val keySchemaElements = mutableListOf<KeySchemaElement>()
         val keyAttributeDefinitions = mutableListOf<AttributeDefinition>()
 
@@ -31,7 +31,8 @@ class TableSupport<T : Any>(private val tableDefinition: TableDefinition<T>) {
             .tableName(tableDefinition.tableName)
             .keySchema(keySchemaElements)
             .attributeDefinitions(keyAttributeDefinitions)
-            .billingMode(BillingMode.PAY_PER_REQUEST)
+            .billingProvisioned()
+            .apply { customize(this) }
             .build()
     }
 
@@ -47,9 +48,26 @@ class TableSupport<T : Any>(private val tableDefinition: TableDefinition<T>) {
 
     private fun AttributeType.toAttributeType(): ScalarAttributeType {
         return when (this) {
-            AttributeType.STRING -> ScalarAttributeType.S
-            AttributeType.LONG -> ScalarAttributeType.N
+            STRING -> ScalarAttributeType.S
+            INT, LONG, FLOAT, DOUBLE -> ScalarAttributeType.N
             else -> throw RuntimeException("Invalid key attribute type, only String or Number are allowed")//TODO custom exception
         }
     }
+}
+
+fun CreateTableRequest.Builder.billingPayPerRequest(): CreateTableRequest.Builder {
+    return billingMode(BillingMode.PAY_PER_REQUEST)
+}
+
+fun CreateTableRequest.Builder.billingProvisioned(
+    readCapacityUnits: Long = 5,
+    writeCapacityUnits: Long = 5
+): CreateTableRequest.Builder {
+    return billingMode(BillingMode.PROVISIONED)
+        .provisionedThroughput(
+            ProvisionedThroughput.builder()
+                .readCapacityUnits(readCapacityUnits)
+                .writeCapacityUnits(writeCapacityUnits)
+                .build()
+        )
 }

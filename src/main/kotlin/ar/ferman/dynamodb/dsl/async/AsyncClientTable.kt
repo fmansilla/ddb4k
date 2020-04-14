@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import software.amazon.awssdk.services.dynamodb.model.CreateTableRequest
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -22,8 +23,8 @@ class AsyncClientTable<T: Any>(
 
     private val tableSupport = TableSupport(tableDefinition)
 
-    override suspend fun create() {
-        val createTableRequest = tableSupport.buildCreateTableRequest()
+    override suspend fun create(customize: CreateTableRequest.Builder.() -> Unit) {
+        val createTableRequest = tableSupport.buildCreateTableRequest(customize)
 
         return suspendCoroutine { continuation ->
             dynamoDbClient.createTable(createTableRequest).whenComplete { _, error ->

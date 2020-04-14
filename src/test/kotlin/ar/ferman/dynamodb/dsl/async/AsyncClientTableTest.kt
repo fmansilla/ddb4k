@@ -2,8 +2,6 @@ package ar.ferman.dynamodb.dsl.async
 
 import ar.ferman.dynamodb.dsl.DynamoDbForTests
 import ar.ferman.dynamodb.dsl.TableContractTest
-import ar.ferman.dynamodb.dsl.createTable
-import ar.ferman.dynamodb.dsl.example.data.ExampleData
 import ar.ferman.dynamodb.dsl.example.data.ExampleTable
 import ar.ferman.dynamodb.dsl.recreate
 import ar.ferman.dynamodb.dsl.utils.KGenericContainer
@@ -29,10 +27,7 @@ class AsyncClientTableTest : TableContractTest() {
         dynamoDbClient = DynamoDbForTests.createAsyncClient(dynamoDbContainer)
         table = AsyncClientTable(
             dynamoDbClient,
-            createTable(ExampleTable.TableName) {
-                hashKey(ExampleTable.UserId, String::class, ExampleData::userId)
-                attribute(ExampleTable.Score, Int::class, ExampleData::score)
-            }
+            ExampleTable.createTableDefinition()
         )
         table.recreate()
     }

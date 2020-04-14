@@ -47,8 +47,7 @@ abstract class TableContractTest {
 
     @Test
     fun `scan empty table does not return items`() = runBlocking<Unit> {
-        val result = table.scan {
-        }.toList()
+        val result = table.scan().toList()
 
         then(result).isEmpty()
     }
@@ -59,8 +58,7 @@ abstract class TableContractTest {
         table.put(ExampleData(USERNAME_2, 10))
         table.put(ExampleData(USERNAME_3, 15))
 
-        val result = table.scan {
-        }.toList()
+        val result = table.scan().toList()
 
         then(result).containsExactlyInAnyOrder(
             ExampleData(USERNAME_1, 5),
@@ -73,15 +71,15 @@ abstract class TableContractTest {
     fun `update only some attributes`() = runBlocking<Unit> {
         table.put(ExampleData(USERNAME_1, 5))
         table.update {
-            set(ExampleTable.Score, 10)
+            set(ExampleTable.IntAttribute, 10)
             where {
                 ExampleTable.UserId eq USERNAME_1
+                ExampleTable.Score eq 5
             }
         }
 
-        val result = table.scan {
-        }.toList()
+        val result = table.scan().toList()
 
-        then(result).containsExactlyInAnyOrder(ExampleData(USERNAME_1, 10))
+        then(result).containsExactlyInAnyOrder(ExampleData(USERNAME_1, 5, attInt = 10))
     }
 }
