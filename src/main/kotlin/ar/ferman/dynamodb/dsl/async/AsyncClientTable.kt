@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import software.amazon.awssdk.services.dynamodb.model.CreateTableRequest
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -22,28 +21,6 @@ class AsyncClientTable<T : Any>(
 ) : Table<T> {
 
     private val tableSupport = TableSupport(tableDefinition)
-
-    override suspend fun create(customize: CreateTableRequest.Builder.() -> Unit) {
-        val createTableRequest = tableSupport.buildCreateTableRequest(customize)
-
-        return suspendCoroutine { continuation ->
-            dynamoDbClient.createTable(createTableRequest).whenComplete { _, error ->
-                if (error != null) continuation.resumeWithException(error)
-                else continuation.resume(Unit)
-            }
-        }
-    }
-
-    override suspend fun delete() {
-        val deleteTableRequest = tableSupport.buildDeleteTableRequest()
-
-        return suspendCoroutine { continuation ->
-            dynamoDbClient.deleteTable(deleteTableRequest).whenComplete { _, error ->
-                if (error != null) continuation.resumeWithException(error)
-                else continuation.resume(Unit)
-            }
-        }
-    }
 
     override fun query(block: Query<T>.() -> Unit): Flow<T> {
         val queryBuilder = Query(tableDefinition)
@@ -156,7 +133,7 @@ class AsyncClientTable<T : Any>(
         val deleteItemRequest = tableSupport.buildDeleteItemRequest(key)
 
         return suspendCoroutine { continuation ->
-            dynamoDbClient.deleteItem(deleteItemRequest).whenComplete { response, error ->
+            dynamoDbClient.deleteItem(deleteItemRequest).whenComplete { _, error ->
                 if (error != null) continuation.resumeWithException(error)
                 else continuation.resume(Unit)
             }

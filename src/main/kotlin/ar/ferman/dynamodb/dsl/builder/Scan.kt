@@ -24,7 +24,7 @@ class Scan<T : Any>(tableDefinition: TableDefinition<T>) {
         val builder = if (lastEvaluatedKey.isNotEmpty()) {
             scanRequestBuilder.copy().exclusiveStartKey(lastEvaluatedKey)
         } else {
-            scanRequestBuilder
+            scanRequestBuilder.copy()
         }
         return builder.build()
     }

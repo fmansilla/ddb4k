@@ -1,8 +1,7 @@
 package ar.ferman.dynamodb.dsl.async
 
 import ar.ferman.dynamodb.dsl.DynamoDbForTests
-import ar.ferman.dynamodb.dsl.TableContractTest
-import ar.ferman.dynamodb.dsl.example.data.ExampleTable
+import ar.ferman.dynamodb.dsl.TablesContractTest
 import ar.ferman.dynamodb.dsl.utils.KGenericContainer
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
@@ -11,7 +10,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
 @Testcontainers
-class AsyncClientTableTest : TableContractTest() {
+class AsyncClientTablesTest : TablesContractTest() {
 
     companion object {
         @Container
@@ -24,8 +23,14 @@ class AsyncClientTableTest : TableContractTest() {
     @BeforeEach
     internal fun setUp() = runBlocking<Unit> {
         dynamoDbClient = DynamoDbForTests.createAsyncClient(dynamoDbContainer)
-        val tableDefinition = ExampleTable.createTableDefinition()
-        AsyncClientTables(dynamoDbClient).recreate(tableDefinition)
-        table = AsyncClientTable(dynamoDbClient, tableDefinition)
+        deleteAllTables()
+
+        tables = AsyncClientTables(dynamoDbClient)
+    }
+
+    private fun deleteAllTables() {
+        dynamoDbClient.listTablesPaginator().tableNames().subscribe { tableName ->
+            dynamoDbClient.deleteTable { it.tableName(tableName) }.join()
+        }.join()
     }
 }

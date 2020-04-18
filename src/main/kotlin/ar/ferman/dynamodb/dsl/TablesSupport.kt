@@ -4,8 +4,12 @@ import ar.ferman.dynamodb.dsl.AttributeType.*
 import software.amazon.awssdk.services.dynamodb.model.*
 import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition
 
-class TableSupport<T : Any>(private val tableDefinition: TableDefinition<T>) {
-    fun buildCreateTableRequest(customize: CreateTableRequest.Builder.() -> Unit): CreateTableRequest {
+class TablesSupport {
+
+    fun <T : Any> buildCreateTableRequest(
+        tableDefinition: TableDefinition<T>,
+        customize: CreateTableRequest.Builder.() -> Unit
+    ): CreateTableRequest {
         val keySchemaElements = mutableListOf<KeySchemaElement>()
         val keyAttributeDefinitions = mutableListOf<AttributeDefinition>()
 
@@ -36,28 +40,9 @@ class TableSupport<T : Any>(private val tableDefinition: TableDefinition<T>) {
             .build()
     }
 
-    fun buildDeleteTableRequest(): DeleteTableRequest {
+    fun buildDeleteTableRequest(tableName: String): DeleteTableRequest {
         return DeleteTableRequest.builder()
-            .tableName(tableDefinition.tableName)
-            .build()
-    }
-
-    fun buildPutItemRequest(value: T): PutItemRequest {
-        return PutItemRequest.builder().tableName(tableDefinition.tableName).item(tableDefinition.toItem(value)).build()
-    }
-
-    fun buildGetItemRequest(value: T): GetItemRequest {
-        return GetItemRequest.builder().tableName(tableDefinition.tableName).key(tableDefinition.toItemKey(value))
-            .build()
-    }
-
-    fun buildBatchGetItemRequest(values: Set<T>): BatchGetItemRequest {
-        val keys = KeysAndAttributes.builder().keys(values.map(tableDefinition::toItemKey)).build()
-        return BatchGetItemRequest.builder().requestItems(mapOf(tableDefinition.tableName to keys)).build()
-    }
-
-    fun buildDeleteItemRequest(value: T): DeleteItemRequest {
-        return DeleteItemRequest.builder().tableName(tableDefinition.tableName).key(tableDefinition.toItemKey(value))
+            .tableName(tableName)
             .build()
     }
 
@@ -68,4 +53,21 @@ class TableSupport<T : Any>(private val tableDefinition: TableDefinition<T>) {
             else -> throw RuntimeException("Invalid key attribute type, only String or Number are allowed")//TODO custom exception
         }
     }
+}
+
+fun CreateTableRequest.Builder.billingPayPerRequest(): CreateTableRequest.Builder {
+    return billingMode(BillingMode.PAY_PER_REQUEST)
+}
+
+fun CreateTableRequest.Builder.billingProvisioned(
+    readCapacityUnits: Long = 5,
+    writeCapacityUnits: Long = 5
+): CreateTableRequest.Builder {
+    return billingMode(BillingMode.PROVISIONED)
+        .provisionedThroughput(
+            ProvisionedThroughput.builder()
+                .readCapacityUnits(readCapacityUnits)
+                .writeCapacityUnits(writeCapacityUnits)
+                .build()
+        )
 }

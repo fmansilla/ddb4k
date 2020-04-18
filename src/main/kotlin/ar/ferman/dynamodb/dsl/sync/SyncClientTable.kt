@@ -12,30 +12,12 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import software.amazon.awssdk.services.dynamodb.model.CreateTableRequest
 
 class SyncClientTable<T : Any>(
     private val dynamoDbClient: DynamoDbClient,
     private val tableDefinition: TableDefinition<T>
 ) : Table<T> {
     private val tableSupport = TableSupport(tableDefinition)
-
-    override suspend fun create(customize: CreateTableRequest.Builder.() -> Unit) {
-        val createTableRequest = tableSupport.buildCreateTableRequest(customize)
-
-        withContext(Dispatchers.IO) {
-            dynamoDbClient.createTable(createTableRequest)
-        }
-    }
-
-    override suspend fun delete() {
-        val deleteTableRequest = tableSupport.buildDeleteTableRequest()
-
-        withContext(Dispatchers.IO) {
-            dynamoDbClient.deleteTable(deleteTableRequest)
-        }
-    }
-
 
     override fun query(block: Query<T>.() -> Unit): Flow<T> {
         val queryBuilder = Query(tableDefinition)
