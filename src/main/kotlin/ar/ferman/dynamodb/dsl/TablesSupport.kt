@@ -1,6 +1,5 @@
 package ar.ferman.dynamodb.dsl
 
-import ar.ferman.dynamodb.dsl.AttributeType.*
 import software.amazon.awssdk.services.dynamodb.model.*
 import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition
 
@@ -19,7 +18,7 @@ class TablesSupport {
                     KeyType.HASH
                 ).build()
             )
-            keyAttributeDefinitions.add(AttributeDefinition.builder().attributeName(name).attributeType(type.toAttributeType()).build())
+            keyAttributeDefinitions.add(AttributeDefinition.builder().attributeName(name).attributeType(type.toScalarAttributeType()).build())
         }
 
         tableDefinition.sortKey?.apply {
@@ -28,7 +27,7 @@ class TablesSupport {
                     KeyType.RANGE
                 ).build()
             )
-            keyAttributeDefinitions.add(AttributeDefinition.builder().attributeName(name).attributeType(type.toAttributeType()).build())
+            keyAttributeDefinitions.add(AttributeDefinition.builder().attributeName(name).attributeType(type.toScalarAttributeType()).build())
         }
 
         return CreateTableRequest.builder()
@@ -44,14 +43,6 @@ class TablesSupport {
         return DeleteTableRequest.builder()
             .tableName(tableName)
             .build()
-    }
-
-    private fun AttributeType.toAttributeType(): ScalarAttributeType {
-        return when (this) {
-            STRING -> ScalarAttributeType.S
-            INT, LONG, FLOAT, DOUBLE -> ScalarAttributeType.N
-            else -> throw RuntimeException("Invalid key attribute type, only String or Number are allowed")//TODO custom exception
-        }
     }
 }
 

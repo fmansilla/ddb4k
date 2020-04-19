@@ -1,10 +1,9 @@
 package ar.ferman.dynamodb.dsl.builder
 
-import ar.ferman.dynamodb.dsl.Attributes
 import ar.ferman.dynamodb.dsl.TableDefinition
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 
-class Query<T : Any>(private val tableDefinition: TableDefinition<T>) {
+class Query<T : Any>(tableDefinition: TableDefinition<T>) {
     private val queryRequestBuilder = QueryRequest.builder().tableName(tableDefinition.tableName)
 
     internal var mapper: (Attributes) -> T = tableDefinition::fromItem

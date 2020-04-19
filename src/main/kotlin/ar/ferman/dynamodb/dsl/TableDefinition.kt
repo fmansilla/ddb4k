@@ -1,62 +1,12 @@
 package ar.ferman.dynamodb.dsl
 
 import ar.ferman.dynamodb.dsl.AttributeType.STRING_LIST
+import ar.ferman.dynamodb.dsl.error.InvalidTypeException
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.isSubclassOf
-
-enum class AttributeType(
-    private val builderType: (AttributeValue.Builder, Any) -> AttributeValue.Builder
-) {
-    STRING({ builder, value -> builder.s(value as String) }),
-    INT({ builder, value -> builder.n(value as String) }),
-    LONG({ builder, value -> builder.n(value as String) }),
-    FLOAT({ builder, value -> builder.n(value as String) }),
-    DOUBLE({ builder, value -> builder.n(value as String) }),
-    BOOLEAN({ builder, value -> builder.bool(value as Boolean) }),
-    STRING_LIST({ builder, value -> builder.ss(value as List<String>) });
-
-    fun buildAttributeValue(value: Any): AttributeValue {
-        val builder = AttributeValue.builder()
-        builderType.invoke(builder, convertPrimitiveValue(value))
-        return builder.build()
-    }
-
-    private fun convertPrimitiveValue(value: Any): Any {
-        return when (this) {
-            INT, LONG, FLOAT, DOUBLE -> value.toString()
-            else -> value
-        }
-    }
-
-    fun primitiveValueFrom(attributeValue: AttributeValue?): Any? {
-        if (attributeValue == null) return null
-        return when (this) {
-            STRING -> attributeValue.s()
-            INT -> attributeValue.n().toInt()
-            LONG -> attributeValue.n().toLong()
-            FLOAT -> attributeValue.n().toFloat()
-            DOUBLE -> attributeValue.n().toDouble()
-            BOOLEAN -> attributeValue.bool()
-            STRING_LIST -> attributeValue.ss()
-        }
-    }
-
-    companion object {
-        fun from(type: KClass<*>): AttributeType = when {
-            type == String::class -> STRING
-            type.isSubclassOf(Int::class) -> INT
-            type.isSubclassOf(Long::class) -> LONG
-            type.isSubclassOf(Float::class) -> FLOAT
-            type.isSubclassOf(Number::class) -> DOUBLE
-            type.isSubclassOf(Boolean::class) -> BOOLEAN
-            type.isSubclassOf(List::class) -> STRING_LIST
-            else -> throw RuntimeException("Unsupported type")//TODO custom exception
-        }
-    }
-}
 
 data class AttributeDefinition(val name: String, val type: AttributeType, val property: KMutableProperty<*>)
 
@@ -81,9 +31,11 @@ class TableDefinition<T : Any>(
 ) : DefBuilder {
     var hashKey: AttributeDefinition? = null
         private set
+
     var sortKey: AttributeDefinition? = null
         private set
-    val attributes = mutableListOf<AttributeDefinition>()
+
+    private val attributes = mutableListOf<AttributeDefinition>()
 
     val allAttributes: List<AttributeDefinition>
         get() = mutableListOf<AttributeDefinition>().apply {
@@ -107,6 +59,8 @@ class TableDefinition<T : Any>(
     }
 
     override fun <E : Any> attribute(attributeName: String, type: KClass<E>, property: KMutableProperty<E?>) {
+        if (type.isSubclassOf(Collection::class)) throw InvalidTypeException("Collection type not allowed, you can use listAttribute(...)")
+
         val attributeType = AttributeType.from(type)
         attributes.add(AttributeDefinition(attributeName, attributeType, property))
     }
@@ -136,7 +90,6 @@ class TableDefinition<T : Any>(
         sortKey?.setPropertyValueIfAvailable(item, value)
         attributes.forEach {
             it.setPropertyValueIfAvailable(item, value)
-
         }
         return value
     }

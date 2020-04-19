@@ -1,6 +1,5 @@
 package ar.ferman.dynamodb.dsl.builder
 
-import ar.ferman.dynamodb.dsl.Attributes
 import ar.ferman.dynamodb.dsl.TableDefinition
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest
 
