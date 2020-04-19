@@ -1,5 +1,6 @@
 package ar.ferman.dynamodb.dsl
 
+import ar.ferman.dynamodb.dsl.AttributeType.STRING_LIST
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
@@ -14,7 +15,8 @@ enum class AttributeType(
     LONG({ builder, value -> builder.n(value as String) }),
     FLOAT({ builder, value -> builder.n(value as String) }),
     DOUBLE({ builder, value -> builder.n(value as String) }),
-    BOOLEAN({ builder, value -> builder.bool(value as Boolean) });
+    BOOLEAN({ builder, value -> builder.bool(value as Boolean) }),
+    STRING_LIST({ builder, value -> builder.ss(value as List<String>) });
 
     fun buildAttributeValue(value: Any): AttributeValue {
         val builder = AttributeValue.builder()
@@ -24,8 +26,8 @@ enum class AttributeType(
 
     private fun convertPrimitiveValue(value: Any): Any {
         return when (this) {
-            STRING, BOOLEAN -> value
             INT, LONG, FLOAT, DOUBLE -> value.toString()
+            else -> value
         }
     }
 
@@ -38,6 +40,7 @@ enum class AttributeType(
             FLOAT -> attributeValue.n().toFloat()
             DOUBLE -> attributeValue.n().toDouble()
             BOOLEAN -> attributeValue.bool()
+            STRING_LIST -> attributeValue.ss()
         }
     }
 
@@ -49,6 +52,7 @@ enum class AttributeType(
             type.isSubclassOf(Float::class) -> FLOAT
             type.isSubclassOf(Number::class) -> DOUBLE
             type.isSubclassOf(Boolean::class) -> BOOLEAN
+            type.isSubclassOf(List::class) -> STRING_LIST
             else -> throw RuntimeException("Unsupported type")//TODO custom exception
         }
     }
@@ -67,6 +71,7 @@ interface DefBuilder {
     fun <E : Any> hashKey(attributeName: String, type: KClass<E>, property: KMutableProperty<E?>)
     fun <E : Any> sortKey(attributeName: String, type: KClass<E>, property: KMutableProperty<E?>)
     fun <E : Any> attribute(attributeName: String, type: KClass<E>, property: KMutableProperty<E?>)
+    fun listAttribute(attributeName: String, property: KMutableProperty<List<String>?>)
 }
 
 class TableDefinition<T : Any>(
@@ -104,6 +109,10 @@ class TableDefinition<T : Any>(
     override fun <E : Any> attribute(attributeName: String, type: KClass<E>, property: KMutableProperty<E?>) {
         val attributeType = AttributeType.from(type)
         attributes.add(AttributeDefinition(attributeName, attributeType, property))
+    }
+
+    override fun listAttribute(attributeName: String, property: KMutableProperty<List<String>?>) {
+        attributes.add(AttributeDefinition(attributeName, STRING_LIST, property))
     }
 
     internal fun toItem(value: T): Map<String, AttributeValue> {

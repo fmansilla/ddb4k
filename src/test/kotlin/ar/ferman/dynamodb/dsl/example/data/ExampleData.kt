@@ -9,5 +9,6 @@ data class ExampleData(
     var attInt: Int? = null,
     var attLong: Long? = null,
     var attFloat: Float? = null,
-    var attDouble: Double? = null
+    var attDouble: Double? = null,
+    var attStringList: List<String>? = null
 )

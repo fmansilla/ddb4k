@@ -31,9 +31,20 @@ class Update<T: Any>(tableDefinition: TableDefinition<T>) {
         getUpdateExpressionsList("REMOVE").addAll(attributeNames)
     }
 
-//        fun add() {
-//            updateExpressions += ""
-//        }
+    fun add(attributeName: String, value: Number) {
+        getUpdateExpressionsList("ADD") += "$attributeName :$attributeName"
+        updateExpressionAttributes[":$attributeName"] = value.toAttributeValue()
+    }
+
+    fun add(attributeName: String, values: List<String>) {
+        getUpdateExpressionsList("ADD") += "$attributeName :$attributeName"
+        updateExpressionAttributes[":$attributeName"] = values.toAttributeValue()
+    }
+
+    fun delete(attributeName: String, values: List<String>) {
+        getUpdateExpressionsList("DELETE") += "$attributeName :$attributeName"
+        updateExpressionAttributes[":$attributeName"] = values.toAttributeValue()
+    }
 
     private fun getUpdateExpressionsList(operation: String) =
         updateExpressions.computeIfAbsent(operation) { mutableListOf() }

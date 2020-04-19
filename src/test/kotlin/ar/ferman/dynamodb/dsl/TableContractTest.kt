@@ -136,4 +136,96 @@ abstract class TableContractTest {
 
         then(result).containsExactlyInAnyOrder(ExampleData(USERNAME_1, 5, attInt = 10))
     }
+
+    @Test
+    fun `update set on empty attribute`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5))
+        table.update {
+            add(ExampleTable.StringListAttribute, listOf("c", "d", "e"))
+            where {
+                ExampleTable.UserId eq USERNAME_1
+                ExampleTable.Score eq 5
+            }
+        }
+
+        val result = table.scan().toList()
+
+        then(result).containsExactlyInAnyOrder(
+            ExampleData(
+                USERNAME_1,
+                5,
+                attStringList = listOf("c", "d", "e")
+            )
+        )
+    }
+
+    @Test
+    fun `update set adding some elements`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5, attStringList = listOf("a", "b")))
+        table.update {
+            add(ExampleTable.StringListAttribute, listOf("c", "d", "e"))
+            where {
+                ExampleTable.UserId eq USERNAME_1
+                ExampleTable.Score eq 5
+            }
+        }
+
+        val result = table.scan().toList()
+
+        then(result).containsExactlyInAnyOrder(
+            ExampleData(
+                USERNAME_1,
+                5,
+                attStringList = listOf("a", "b", "c", "d", "e")
+            )
+        )
+    }
+
+    @Test
+    fun `update set removing some elements`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5, attStringList = listOf("a", "b", "c", "d")))
+        table.update {
+            delete(ExampleTable.StringListAttribute, listOf("b", "c"))
+            where {
+                ExampleTable.UserId eq USERNAME_1
+                ExampleTable.Score eq 5
+            }
+        }
+
+        val result = table.scan().toList()
+
+        then(result).containsExactlyInAnyOrder(ExampleData(USERNAME_1, 5, attStringList = listOf("a", "d")))
+    }
+
+    @Test
+    fun `increment numeric attribute`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5, attInt = 10))
+        table.update {
+            add(ExampleTable.IntAttribute, 5)
+            where {
+                ExampleTable.UserId eq USERNAME_1
+                ExampleTable.Score eq 5
+            }
+        }
+
+        val result = table.scan().toList()
+
+        then(result).containsExactlyInAnyOrder(ExampleData(USERNAME_1, 5, attInt = 15))
+    }
+
+    @Test
+    fun `decrement numeric attribute`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5, attInt = 10))
+        table.update {
+            add(ExampleTable.IntAttribute, -3)
+            where {
+                ExampleTable.UserId eq USERNAME_1
+                ExampleTable.Score eq 5
+            }
+        }
+
+        val result = table.scan().toList()
+
+        then(result).containsExactlyInAnyOrder(ExampleData(USERNAME_1, 5, attInt = 7))
+    }
 }

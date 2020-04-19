@@ -14,6 +14,7 @@ object ExampleTable {
     val LongAttribute = "att_long"
     val FloatAttribute = "att_float"
     val DoubleAttribute = "att_double"
+    val StringListAttribute = "att_string_list"
 
     fun createTableDefinition(): TableDefinition<ExampleData> = createTable(TableName) {
         hashKey(UserId, String::class, ExampleData::userId)
@@ -25,5 +26,6 @@ object ExampleTable {
         attribute(LongAttribute, Long::class, ExampleData::attLong)
         attribute(FloatAttribute, Float::class, ExampleData::attFloat)
         attribute(DoubleAttribute, Double::class, ExampleData::attDouble)
+        listAttribute(StringListAttribute, ExampleData::attStringList)
     }
 }

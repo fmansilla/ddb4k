@@ -19,6 +19,7 @@ internal class TableDefinitionTest {
             attLong = 50L
             attFloat = 51.4f
             attDouble = 5.999998
+            attStringList = listOf("d", "a", "b", "c")
         }
         val item = tableDef.toItem(userRanking)
 
@@ -35,6 +36,7 @@ internal class TableDefinitionTest {
             attLong = 50L
             attFloat = 51.4f
             attDouble = 5.999998
+            attStringList = listOf("d", "a", "b", "c")
         })
     }
 }
