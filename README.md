@@ -2,6 +2,8 @@
 
 DDB4K (or Dynamo DB for Kotlin) is a set of abstractions intended to reduce the complexity of working with AWS Dynamo DB java API.
 
+Latest stable version is `1.0.0`
+
 ## Download
 You can download the dependencies using https://jitpack.io/
 
