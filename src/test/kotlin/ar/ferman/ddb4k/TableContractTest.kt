@@ -98,6 +98,24 @@ abstract class TableContractTest {
         then(result).containsExactly(ExampleData(USERNAME_1, 5))
     }
 
+    @Test
+    fun `query for multiple existent elements in reverse order`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5))
+        table.put(ExampleData(USERNAME_1, 10))
+        table.put(ExampleData(USERNAME_2, 15))
+
+        val result = table.query {
+            where {
+                ExampleTable.UserId eq USERNAME_1
+            }
+            scanIndexForward(false)
+        }.toList()
+
+        then(result).containsExactly(
+            ExampleData(USERNAME_1, 10),
+            ExampleData(USERNAME_1, 5)
+        )
+    }
 
     @Test
     fun `scan empty table does not return items`() = runBlocking<Unit> {

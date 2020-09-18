@@ -3,6 +3,7 @@ package ar.ferman.ddb4k.builder
 import ar.ferman.ddb4k.TableDefinition
 import ar.ferman.ddb4k.toAttributeValue
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import software.amazon.awssdk.services.dynamodb.model.ScanRequest
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest
 
 class Update<T: Any>(tableDefinition: TableDefinition<T>) {
@@ -44,6 +45,10 @@ class Update<T: Any>(tableDefinition: TableDefinition<T>) {
     fun delete(attributeName: String, values: List<String>) {
         getUpdateExpressionsList("DELETE") += "$attributeName :$attributeName"
         updateExpressionAttributes[":$attributeName"] = values.toAttributeValue()
+    }
+
+    fun custom(block: UpdateItemRequest.Builder.() -> Unit) {
+        block(updateItemRequest)
     }
 
     private fun getUpdateExpressionsList(operation: String) =

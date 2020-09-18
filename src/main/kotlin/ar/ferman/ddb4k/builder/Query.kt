@@ -16,12 +16,20 @@ class Query<T : Any>(tableDefinition: TableDefinition<T>) {
         queryRequestBuilder.limit(maxItems)
     }
 
+    fun scanIndexForward(enabled : Boolean = true) {
+        queryRequestBuilder.scanIndexForward(enabled)
+    }
+
     fun mappingItems(itemMapper: (Attributes) -> T) {
         this.mapper = itemMapper
     }
 
     fun where(block: QueryCondition.() -> Unit) {
         block.invoke(QueryCondition(queryRequestBuilder))
+    }
+
+    fun custom(block: QueryRequest.Builder.() -> Unit) {
+        block(queryRequestBuilder)
     }
 
     fun build(lastEvaluatedKey: Attributes): QueryRequest {

@@ -1,6 +1,7 @@
 package ar.ferman.ddb4k.builder
 
 import ar.ferman.ddb4k.TableDefinition
+import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest
 
 class Scan<T : Any>(tableDefinition: TableDefinition<T>) {
@@ -17,6 +18,10 @@ class Scan<T : Any>(tableDefinition: TableDefinition<T>) {
 
     fun mappingItems(itemMapper: (Attributes) -> T) {
         this.mapper = itemMapper
+    }
+
+    fun custom(block: ScanRequest.Builder.() -> Unit) {
+        block(scanRequestBuilder)
     }
 
     fun build(lastEvaluatedKey: Attributes): ScanRequest {
