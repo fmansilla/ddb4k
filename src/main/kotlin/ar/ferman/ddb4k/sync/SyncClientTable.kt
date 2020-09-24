@@ -2,10 +2,7 @@ package ar.ferman.ddb4k.sync
 
 import ar.ferman.ddb4k.Table
 import ar.ferman.ddb4k.TableDefinition
-import ar.ferman.ddb4k.builder.Query
-import ar.ferman.ddb4k.builder.Scan
-import ar.ferman.ddb4k.builder.TableSupport
-import ar.ferman.ddb4k.builder.Update
+import ar.ferman.ddb4k.builder.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -17,7 +14,6 @@ class SyncClientTable<T : Any>(
     private val dynamoDbClient: DynamoDbClient,
     private val tableDefinition: TableDefinition<T>
 ) : Table<T> {
-    private val tableSupport = TableSupport(tableDefinition)
 
     override fun query(block: Query<T>.() -> Unit): Flow<T> {
         val queryBuilder = Query(tableDefinition)
@@ -42,13 +38,14 @@ class SyncClientTable<T : Any>(
         }
     }
 
-    override suspend fun put(value: T) = withContext(Dispatchers.IO) {
-        val putItemRequest = tableSupport.buildPutItemRequest(value)
+    override suspend fun put(value: T, block: Put<T>.() -> Unit) =
+        withContext(Dispatchers.IO) {
+            val putItemRequest = Put(tableDefinition, value).apply(block).build()
 
-        dynamoDbClient.putItem(putItemRequest)
+            dynamoDbClient.putItem(putItemRequest)
 
-        Unit
-    }
+            Unit
+        }
 
     override fun scan(block: Scan<T>.() -> Unit): Flow<T> {
         val scanBuilder = Scan<T>(tableDefinition)
@@ -84,16 +81,17 @@ class SyncClientTable<T : Any>(
         }
     }
 
-    override suspend fun get(key: T): T? = withContext(Dispatchers.IO) {
-        val getItemRequest = tableSupport.buildGetItemRequest(key)
+    override suspend fun get(key: T, block: Get<T>.() -> Unit): T? =
+        withContext(Dispatchers.IO) {
+            val getItemRequest = Get(tableDefinition, key).apply(block).build()
 
-        dynamoDbClient.getItem(getItemRequest).item()
-            ?.takeIf { !it.isNullOrEmpty() }
-            ?.let(tableDefinition::fromItem)
-    }
+            dynamoDbClient.getItem(getItemRequest).item()
+                ?.takeIf { !it.isNullOrEmpty() }
+                ?.let(tableDefinition::fromItem)
+        }
 
-    override suspend fun get(keys: Set<T>): List<T> = withContext(Dispatchers.IO) {
-        val batchGetItemRequest = tableSupport.buildBatchGetItemRequest(keys)
+    override suspend fun get(keys: Set<T>, block: GetBatch<T>.() -> Unit): List<T> = withContext(Dispatchers.IO) {
+        val batchGetItemRequest = GetBatch(tableDefinition, keys).apply(block).build()
 
         dynamoDbClient.batchGetItem(batchGetItemRequest).responses()[tableDefinition.tableName]
             ?.mapNotNull {
@@ -102,11 +100,12 @@ class SyncClientTable<T : Any>(
             ?: emptyList()
     }
 
-    override suspend fun delete(key: T) = withContext(Dispatchers.IO) {
-        val deleteItemRequest = tableSupport.buildDeleteItemRequest(key)
+    override suspend fun delete(key: T, block: Delete<T>.() -> Unit) =
+        withContext(Dispatchers.IO) {
+            val deleteItemRequest = Delete(tableDefinition, key).apply(block).build()
 
-        dynamoDbClient.deleteItem(deleteItemRequest)
+            dynamoDbClient.deleteItem(deleteItemRequest)
 
-        Unit
-    }
+            Unit
+        }
 }

@@ -4,8 +4,11 @@ import ar.ferman.ddb4k.example.data.ExampleData
 import ar.ferman.ddb4k.example.data.ExampleTable
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.BDDAssertions.assertThat
 import org.assertj.core.api.BDDAssertions.then
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
+import java.lang.RuntimeException
 
 abstract class TableContractTest {
     protected lateinit var table: Table<ExampleData>
@@ -33,10 +36,25 @@ abstract class TableContractTest {
     }
 
     @Test
+    fun `deny put on existing item using conditional expression`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5, attString = "expected value"))
+
+        kotlin.runCatching {
+            table.put(ExampleData(USERNAME_1, 5, attString = "expected value")) {
+                custom {
+                    conditionExpression("attribute_not_exists(user_id) AND attribute_not_exists(score)")
+                }
+            }
+        }
+            .onSuccess { fail { "Should fail" } }
+            .onFailure { assertThat(it).isInstanceOf(RuntimeException::class.java) }
+    }
+
+    @Test
     fun `delete existent item`() = runBlocking<Unit> {
         table.put(ExampleData(USERNAME_1, 5, attString = "expected value"))
 
-        table.delete(ExampleData(USERNAME_1, 5))
+        table.delete(ExampleData(USERNAME_1, 5)) {}
 
         then(table.scan().toList()).isEmpty()
     }
@@ -45,7 +63,7 @@ abstract class TableContractTest {
     fun `delete non existent item does not affect other items`() = runBlocking<Unit> {
         table.put(ExampleData(USERNAME_1, 5, attString = "expected value"))
 
-        table.delete(ExampleData(USERNAME_2, 10))
+        table.delete(ExampleData(USERNAME_2, 10)) {}
 
         then(table.scan().toList()).containsExactly(ExampleData(USERNAME_1, 5, attString = "expected value"))
     }

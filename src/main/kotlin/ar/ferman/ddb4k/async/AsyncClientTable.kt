@@ -2,10 +2,7 @@ package ar.ferman.ddb4k.async
 
 import ar.ferman.ddb4k.Table
 import ar.ferman.ddb4k.TableDefinition
-import ar.ferman.ddb4k.builder.Query
-import ar.ferman.ddb4k.builder.Scan
-import ar.ferman.ddb4k.builder.TableSupport
-import ar.ferman.ddb4k.builder.Update
+import ar.ferman.ddb4k.builder.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
@@ -19,8 +16,6 @@ class AsyncClientTable<T : Any>(
     private val dynamoDbClient: DynamoDbAsyncClient,
     private val tableDefinition: TableDefinition<T>
 ) : Table<T> {
-
-    private val tableSupport = TableSupport(tableDefinition)
 
     override fun query(block: Query<T>.() -> Unit): Flow<T> {
         val queryBuilder = Query(tableDefinition)
@@ -52,8 +47,8 @@ class AsyncClientTable<T : Any>(
         }
     }
 
-    override suspend fun put(value: T) {
-        val putItemRequest = tableSupport.buildPutItemRequest(value)
+    override suspend fun put(value: T, block: Put<T>.() -> Unit) {
+        val putItemRequest = Put(tableDefinition, value).apply(block).build()
 
         return suspendCoroutine { continuation ->
             dynamoDbClient.putItem(putItemRequest).whenComplete { _, error ->
@@ -104,19 +99,20 @@ class AsyncClientTable<T : Any>(
         }
     }
 
-    override suspend fun get(key: T): T? {
-        val getItemRequest = tableSupport.buildGetItemRequest(key)
+    override suspend fun get(key: T, block: Get<T>.() -> Unit): T? {
+        val getItemRequest = Get(tableDefinition, key).apply(block).build()
 
         return suspendCoroutine { continuation ->
             dynamoDbClient.getItem(getItemRequest).whenComplete { response, error ->
                 if (error != null) continuation.resumeWithException(error)
-                else continuation.resume(response.item()?.takeIf { !it.isNullOrEmpty() }?.let(tableDefinition::fromItem))
+                else continuation.resume(response.item()?.takeIf { !it.isNullOrEmpty() }
+                    ?.let(tableDefinition::fromItem))
             }
         }
     }
 
-    override suspend fun get(keys: Set<T>): List<T> {
-        val batchGetItemRequest = tableSupport.buildBatchGetItemRequest(keys)
+    override suspend fun get(keys: Set<T>, block: GetBatch<T>.() -> Unit): List<T> {
+        val batchGetItemRequest = GetBatch(tableDefinition, keys).apply(block).build()
 
         return suspendCoroutine { continuation ->
             dynamoDbClient.batchGetItem(batchGetItemRequest).whenComplete { response, error ->
@@ -129,8 +125,8 @@ class AsyncClientTable<T : Any>(
         }
     }
 
-    override suspend fun delete(key: T) {
-        val deleteItemRequest = tableSupport.buildDeleteItemRequest(key)
+    override suspend fun delete(key: T, block: Delete<T>.() -> Unit) {
+        val deleteItemRequest = Delete(tableDefinition, key).apply(block).build()
 
         return suspendCoroutine { continuation ->
             dynamoDbClient.deleteItem(deleteItemRequest).whenComplete { _, error ->
