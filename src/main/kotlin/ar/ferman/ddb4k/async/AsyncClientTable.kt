@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlin.math.max
 
 
 class AsyncClientTable<T : Any>(
@@ -24,26 +25,33 @@ class AsyncClientTable<T : Any>(
 
         return flow {
             var lastEvaluatedKey = emptyMap<String, AttributeValue>()
+            val limit = queryBuilder.limit ?: Int.MAX_VALUE
 
-            do {
-                val queryRequest = queryBuilder.build(lastEvaluatedKey)
-                lateinit var pageContent: List<T>
+            if (limit > 0) {
+                var count = 0
+                do {
+                    val queryRequest = queryBuilder.build(lastEvaluatedKey)
+                    lateinit var pageContent: List<T>
 
-                suspendCoroutine<Pair<List<T>, Map<String, AttributeValue>>> { continuation ->
-                    dynamoDbClient.query(queryRequest).whenComplete { result, error ->
-                        if (error != null) {
-                            continuation.resumeWithException(error)
-                        } else {
-                            pageContent =
-                                (result?.items()?.mapNotNull { queryBuilder.mapper.invoke(it) } ?: emptyList())
-                            lastEvaluatedKey = result?.lastEvaluatedKey() ?: emptyMap()
-                            continuation.resume(pageContent to lastEvaluatedKey)
+                    suspendCoroutine<Pair<List<T>, Map<String, AttributeValue>>> { continuation ->
+                        dynamoDbClient.query(queryRequest).whenComplete { result, error ->
+                            if (error != null) {
+                                continuation.resumeWithException(error)
+                            } else {
+                                pageContent =
+                                    (result?.items()?.mapNotNull { queryBuilder.mapper.invoke(it) } ?: emptyList())
+                                lastEvaluatedKey = result?.lastEvaluatedKey() ?: emptyMap()
+                                continuation.resume(pageContent to lastEvaluatedKey)
+                            }
                         }
                     }
-                }
 
-                pageContent.forEach { emit(it) }
-            } while (lastEvaluatedKey.isNotEmpty())
+                    pageContent.asSequence().take(limit - count).forEach {
+                        count++
+                        emit(it)
+                    }
+                } while (lastEvaluatedKey.isNotEmpty() && count < limit)
+            }
         }
     }
 

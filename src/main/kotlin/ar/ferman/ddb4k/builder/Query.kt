@@ -7,6 +7,7 @@ class Query<T : Any>(tableDefinition: TableDefinition<T>) {
     private val queryRequestBuilder = QueryRequest.builder().tableName(tableDefinition.tableName)
 
     internal var mapper: (Attributes) -> T = tableDefinition::fromItem
+    var limit : Int? = null
 
     fun withConsistentRead() {
         queryRequestBuilder.consistentRead(true)
@@ -14,6 +15,7 @@ class Query<T : Any>(tableDefinition: TableDefinition<T>) {
 
     fun limit(maxItems: Int) {
         queryRequestBuilder.limit(maxItems)
+        limit = maxItems
     }
 
     fun scanIndexForward(enabled : Boolean = true) {
