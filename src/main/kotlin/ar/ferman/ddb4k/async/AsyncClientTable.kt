@@ -10,7 +10,6 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-import kotlin.math.max
 
 
 class AsyncClientTable<T : Any>(
@@ -25,7 +24,7 @@ class AsyncClientTable<T : Any>(
 
         return flow {
             var lastEvaluatedKey = emptyMap<String, AttributeValue>()
-            val limit = queryBuilder.limit ?: Int.MAX_VALUE
+            val limit = queryBuilder.currentLimit()
 
             if (limit > 0) {
                 var count = 0
@@ -73,22 +72,27 @@ class AsyncClientTable<T : Any>(
 
         return flow {
             var lastEvaluatedKey = emptyMap<String, AttributeValue>()
+            val limit = scanBuilder.currentLimit()
+            if (limit > 0) {
+                var count = 0
+                do {
+                    val queryRequest = scanBuilder.build(lastEvaluatedKey)
+                    lateinit var pageContent: List<T>
 
-            do {
-                val queryRequest = scanBuilder.build(lastEvaluatedKey)
-                lateinit var pageContent: List<T>
-
-                suspendCoroutine<Unit> { continuation ->
-                    dynamoDbClient.scan(queryRequest).whenComplete { result, _ ->
-                        pageContent = (result?.items()?.mapNotNull { scanBuilder.mapper.invoke(it) } ?: emptyList())
-                        lastEvaluatedKey = result?.lastEvaluatedKey() ?: emptyMap()
-                        continuation.resume(Unit)
+                    suspendCoroutine<Unit> { continuation ->
+                        dynamoDbClient.scan(queryRequest).whenComplete { result, _ ->
+                            pageContent = (result?.items()?.mapNotNull { scanBuilder.mapper.invoke(it) } ?: emptyList())
+                            lastEvaluatedKey = result?.lastEvaluatedKey() ?: emptyMap()
+                            continuation.resume(Unit)
+                        }
                     }
-                }
 
-                pageContent.forEach { emit(it) }
-            } while (lastEvaluatedKey.isNotEmpty())
-
+                    pageContent.asSequence().take(limit - count).forEach {
+                        count++
+                        emit(it)
+                    }
+                } while (lastEvaluatedKey.isNotEmpty() && count < limit)
+            }
         }
     }
 

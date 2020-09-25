@@ -22,7 +22,7 @@ class SyncClientTable<T : Any>(
 
         return flow {
             var lastEvaluatedKey = emptyMap<String, AttributeValue>()
-            val limit = queryBuilder.limit ?: Int.MAX_VALUE
+            val limit = queryBuilder.currentLimit()
             if (limit > 0) {
                 var count = 0
                 do {
@@ -60,19 +60,25 @@ class SyncClientTable<T : Any>(
 
         return flow {
             var lastEvaluatedKey = emptyMap<String, AttributeValue>()
+            val limit = scanBuilder.currentLimit()
+            if (limit > 0) {
+                var count = 0
+                do {
+                    val queryRequest = scanBuilder.build(lastEvaluatedKey)
+                    lateinit var pageContent: List<T>
 
-            do {
-                val queryRequest = scanBuilder.build(lastEvaluatedKey)
-                lateinit var pageContent: List<T>
+                    withContext(Dispatchers.IO) {
+                        val result = dynamoDbClient.scan(queryRequest)
+                        pageContent = (result?.items()?.mapNotNull { scanBuilder.mapper.invoke(it) } ?: emptyList())
+                        lastEvaluatedKey = result?.lastEvaluatedKey() ?: emptyMap()
+                    }
 
-                withContext(Dispatchers.IO) {
-                    val result = dynamoDbClient.scan(queryRequest)
-                    pageContent = (result?.items()?.mapNotNull { scanBuilder.mapper.invoke(it) } ?: emptyList())
-                    lastEvaluatedKey = result?.lastEvaluatedKey() ?: emptyMap()
-                }
-
-                pageContent.forEach { emit(it) }
-            } while (lastEvaluatedKey.isNotEmpty())
+                    pageContent.asSequence().take(limit - count).forEach {
+                        count++
+                        emit(it)
+                    }
+                } while (lastEvaluatedKey.isNotEmpty() && count < limit)
+            }
         }
     }
 

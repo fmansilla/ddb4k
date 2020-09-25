@@ -137,7 +137,7 @@ abstract class TableContractTest {
 
     @Test
     fun `query for multiple existent elements in reverse order with limit`() = runBlocking<Unit> {
-        repeat(10){
+        repeat(10) {
             table.put(ExampleData(USERNAME_1, it + 1))
             table.put(ExampleData(USERNAME_2, 100 * (it + 1)))
         }
@@ -172,6 +172,23 @@ abstract class TableContractTest {
         val result = table.scan().toList()
 
         then(result).containsExactlyInAnyOrder(
+            ExampleData(USERNAME_1, 5),
+            ExampleData(USERNAME_2, 10),
+            ExampleData(USERNAME_3, 15)
+        )
+    }
+
+    @Test
+    fun `scan non empty table with limit return expected items`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5))
+        table.put(ExampleData(USERNAME_2, 10))
+        table.put(ExampleData(USERNAME_3, 15))
+
+        val result = table.scan {
+            limit(2)
+        }.toList()
+
+        then(result).hasSize(2).containsAnyOf(
             ExampleData(USERNAME_1, 5),
             ExampleData(USERNAME_2, 10),
             ExampleData(USERNAME_3, 15)

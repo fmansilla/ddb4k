@@ -1,12 +1,14 @@
 package ar.ferman.ddb4k.builder
 
 import ar.ferman.ddb4k.TableDefinition
-import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest
 
 class Scan<T : Any>(tableDefinition: TableDefinition<T>) {
     private val scanRequestBuilder = ScanRequest.builder().tableName(tableDefinition.tableName)
     internal var mapper: (Attributes) -> T = tableDefinition::fromItem
+    private var limit : Int? = null
+
+    fun currentLimit() = limit ?: Int.MAX_VALUE
 
     fun withConsistentRead() {
         scanRequestBuilder.consistentRead(true)
@@ -14,6 +16,7 @@ class Scan<T : Any>(tableDefinition: TableDefinition<T>) {
 
     fun limit(maxItems: Int) {
         scanRequestBuilder.limit(maxItems)
+        limit = maxItems
     }
 
     fun mappingItems(itemMapper: (Attributes) -> T) {
