@@ -117,6 +117,27 @@ abstract class TableContractTest {
     }
 
     @Test
+    fun `query with complex key returns matching elements`() = runBlocking<Unit> {
+        table.put(ExampleData(USERNAME_1, 5))
+        table.put(ExampleData(USERNAME_1, 10))
+        table.put(ExampleData(USERNAME_1, 15))
+        table.put(ExampleData(USERNAME_1, 20))
+        table.put(ExampleData(USERNAME_2, 20))
+
+        val result = table.query {
+            where {
+                ExampleTable.UserId eq USERNAME_1
+                ExampleTable.Score ge 15
+            }
+        }.toList()
+
+        then(result).containsExactly(
+            ExampleData(USERNAME_1, 15),
+            ExampleData(USERNAME_1, 20)
+        )
+    }
+
+    @Test
     fun `query for multiple existent elements in reverse order`() = runBlocking<Unit> {
         table.put(ExampleData(USERNAME_1, 5))
         table.put(ExampleData(USERNAME_1, 10))
